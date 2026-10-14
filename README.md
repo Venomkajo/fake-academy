@@ -33,7 +33,7 @@ Fake Academy rozwiązuje trzy problemy:
 | Frontend | React 18 + Vite, TypeScript, TanStack Query, Axios, Tailwind CSS |
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic, PyJWT |
 | Baza danych | PostgreSQL 16 |
-| Magazyn plików | MinIO (w 100% zgodne z API Amazon S3) |
+| Magazyn plików | SeaweedFS (w 100% zgodne z API Amazon S3) |
 | AI | Zewnętrzne API zgodne ze schematem OpenAI (podsumowania) |
 | Konteneryzacja | Docker + Docker Compose |
 | Serwowanie frontendu | Nginx (statyczny build Reacta) |
@@ -47,7 +47,7 @@ System ma postać dwóch aplikacji komunikujących się przez REST API
   dostępu do bazy ani magazynu plików.
 - **Backend (FastAPI)** — cała logika biznesowa, autoryzacja (RBAC),
   walidacja danych; podzielony na moduły domenowe.
-- **Usługi zewnętrzne** — PostgreSQL (dane), MinIO (pliki, dostęp
+- **Usługi zewnętrzne** — PostgreSQL (dane), SeaweedFS (pliki, dostęp
   przez podpisane adresy URL), API AI (podsumowania tekstowe).
 
 Całość uruchamiana jest jednym poleceniem `docker compose up` —
