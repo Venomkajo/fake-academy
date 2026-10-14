@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fakeacademy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fakeacademy}
+      POSTGRES_DB: ${POSTGRES_DB:-fakeacademy}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fakeacademy}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  storage:
+    image: chrislusf/seaweedfs:latest
+    command: "server -dir=/data -s3"
+    environment:
+      # na start brak autentykacji S3 (sieć wewnętrzna Compose);
+      # klucze dodamy przy konfiguracji identity w SeaweedFS
+      WEED_S3_URL: http://storage:8333
+    ports:
+      - "8888:8888"      # web UI filera (podgląd plików)
+    volumes:
+      - seaweeddata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9333/cluster/status || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fakeacademy}:${POSTGRES_PASSWORD:-fakeacademy}@db:5432/${POSTGRES_DB:-fakeacademy}
+    ports:
+      - "8001:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  seaweeddata:
