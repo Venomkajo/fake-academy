@@ -1,0 +1,7 @@
+import os
+
+JWT_SECRET = os.environ["JWT_SECRET"]
+
+JWT_ALGORITHM = "HS256"
+
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("JWT_EXPIRE_MINUTES", "60"))

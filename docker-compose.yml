@@ -5,6 +5,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-fakeacademy}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fakeacademy}
       POSTGRES_DB: ${POSTGRES_DB:-fakeacademy}
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -34,6 +36,8 @@ services:
     build: ./backend
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-fakeacademy}:${POSTGRES_PASSWORD:-fakeacademy}@db:5432/${POSTGRES_DB:-fakeacademy}
+      JWT_SECRET: ${JWT_SECRET:-supersecretjwtkey}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-60}
     ports:
       - "8001:8000"
     depends_on:
