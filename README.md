@@ -30,13 +30,12 @@ Fake Academy rozwiązuje trzy problemy:
 
 | Warstwa | Technologia |
 | --- | --- |
-| Frontend | React 18 + Vite, TypeScript, TanStack Query, Axios, Tailwind CSS |
+| Frontend | React 18 + Vite, TypeScript, TanStack Query, Axios |
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic, PyJWT |
 | Baza danych | PostgreSQL 16 |
 | Magazyn plików | SeaweedFS (w 100% zgodne z API Amazon S3) |
 | AI | Zewnętrzne API zgodne ze schematem OpenAI (podsumowania) |
 | Konteneryzacja | Docker + Docker Compose |
-| Serwowanie frontendu | Nginx (statyczny build Reacta) |
 
 ### Architektura
 
