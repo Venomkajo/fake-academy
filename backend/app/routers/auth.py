@@ -4,8 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.config import ACCESS_TOKEN_EXPIRE_MINUTES
 from app.database import get_db
+from app.deps import get_current_user
 from app.models.user import User
 from app.schemas.auth import LoginRequest, TokenResponse
+from app.schemas.user import UserPublic
 from app.security import create_access_token, hash_password, verify_password
 
 # All routes in this file live under /auth and get an "auth" tag in
@@ -53,6 +55,14 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
         access_token=token,
         expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
+
+
+@router.get("/me", response_model=UserPublic)
+def me(current_user: User = Depends(get_current_user)) -> UserPublic:
+    """Who am I? The frontend calls this right after login to fill its
+    user context (name in the navbar, role-based menu, ...).
+    """
+    return current_user
 
 
 def _invalid_credentials() -> HTTPException:

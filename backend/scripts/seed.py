@@ -50,6 +50,7 @@ SEED_USERS = [
 
 
 def main() -> None:
+    """Insert any seed users that are missing; skip existing ones."""
     db = SessionLocal()
     inserted = 0
     try:

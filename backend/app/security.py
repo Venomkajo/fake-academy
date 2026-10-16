@@ -15,10 +15,12 @@ from app.config import (
 # ---------------------------------------------------------------------------
 
 def hash_password(password: str) -> str:
+    """Hash a plaintext password with a random bcrypt salt."""
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(password: str, password_hash: str) -> bool:
+    """Check a plaintext password against a stored bcrypt hash."""
     try:
         return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
     except ValueError:
@@ -31,6 +33,7 @@ def verify_password(password: str, password_hash: str) -> bool:
 # ---------------------------------------------------------------------------
 
 def create_access_token(user_id: int, role: str) -> str:
+    """Sign a short-lived JWT carrying the user's id and role."""
     now = datetime.datetime.now(datetime.timezone.utc)
     payload = {
         "sub": str(user_id),
@@ -42,4 +45,5 @@ def create_access_token(user_id: int, role: str) -> str:
 
 
 def decode_access_token(token: str) -> dict:
+    """Verify signature/expiry and return the claims; raises on any bad token."""
     return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
