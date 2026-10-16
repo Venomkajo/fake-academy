@@ -25,7 +25,7 @@ class User(Base):
     first_name: Mapped[str] = mapped_column(sa.String(100))
     last_name: Mapped[str] = mapped_column(sa.String(100))
     role: Mapped[UserRole] = mapped_column(
-        sa.Enum(UserRole, name="user_role", value_callable=lambda e: [m.value for m in e])
+        sa.Enum(UserRole, name="user_role", values_callable=lambda e: [m.value for m in e])
     )
     is_active: Mapped[bool] = mapped_column(sa.Boolean, default=True, server_default=sa.sql.expression.true())
     created_at: Mapped[datetime.datetime] = mapped_column(

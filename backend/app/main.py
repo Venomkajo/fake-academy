@@ -2,8 +2,11 @@ import sqlalchemy as sa
 from fastapi import Depends, FastAPI
 
 from app.database import get_db
+from app.routers import auth
 
 app = FastAPI(title="Fake Academy API")
+
+app.include_router(auth.router)
 
 @app.get("/health")
 def health():
