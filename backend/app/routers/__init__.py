@@ -2,6 +2,6 @@
 # grades, ...). Each router owns one URL prefix and is registered in
 # app/main.py.
 
-from app.routers import auth
+from app.routers import auth, users
 
-__all__ = ["auth"]
+__all__ = ["auth", "users"]

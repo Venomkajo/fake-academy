@@ -4,7 +4,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.security import decode_access_token
 
 # HTTPBearer is a ready-made dependency that:
@@ -82,3 +82,24 @@ def get_current_user(
         raise HTTPException(status_code=403, detail="Account is deactivated")
 
     return user
+
+
+def require_roles(*allowed: UserRole):
+    """Dependency FACTORY: build a guard that admits only `allowed` roles.
+
+    Usage — right at the route declaration, so the policy is visible
+    where the route is defined, not buried in its body:
+
+        @router.get("/users")
+        def list_users(admin: User = Depends(require_roles(UserRole.ADMIN))):
+            ...
+    """
+
+    def checker(current_user: User = Depends(get_current_user)) -> User:
+        # Deliberately checks the DATABASE row's role, not the JWT's
+        # "role" claim.
+        if current_user.role not in allowed:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
+        return current_user
+
+    return checker

@@ -2,12 +2,13 @@ import sqlalchemy as sa
 from fastapi import Depends, FastAPI
 
 from app.database import get_db
-from app.routers import auth
+from app.routers import auth, users
 
 app = FastAPI(title="Fake Academy API")
 
 # Mount every route group (URL prefix) here.
 app.include_router(auth.router)
+app.include_router(users.router)
 
 @app.get("/health")
 def health():
