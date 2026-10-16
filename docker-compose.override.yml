@@ -5,3 +5,17 @@ services:
       - ./backend:/app        # mount local backend code into container
     command: >
       uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    volumes:
+      # Live source, same pattern as the backend...
+      - ./frontend:/app
+      # ...EXCEPT node_modules: the mount above would replace the
+      # packages installed during the image build with the HOST's
+      # node_modules — empty on Windows. This named volume re-hides
+      # that path, keeping the container's installed packages intact.
+      - frontend_node_modules:/app/node_modules
+    command: npm run dev
+
+volumes:
+  frontend_node_modules:

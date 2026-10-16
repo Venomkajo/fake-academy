@@ -7,3 +7,13 @@ JWT_ALGORITHM = "HS256"
 
 # Access-token lifetime in minutes (defaults to one hour).
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("JWT_EXPIRE_MINUTES", "60"))
+
+# CORS: which browser origins may call this API. The browser (not us)
+# enforces CORS — this list is us answering the browser's question
+# "may origin X talk to you?". Comma-separated; the Vite dev server is
+# published at http://localhost:3000.
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
