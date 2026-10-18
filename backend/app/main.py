@@ -16,7 +16,7 @@ app = FastAPI(title="Fake Academy API")
 # environments deliberately; allow_credentials lets cookies fly later.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
+    allow_origins='*',
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

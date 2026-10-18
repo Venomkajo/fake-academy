@@ -1,26 +1,50 @@
-import { useState } from 'react'
-import { api } from './api'
+// Root component: a tiny three-state machine.
+//
+//   booting ──token?──▶ /auth/me ──ok──▶ logged in
+//     │ no                   └─401─▶ clear token ─▶ login form
+//     └───────────────────────────────────────────▶ login form
 
-type Health = { status: string }
+import { useEffect, useState } from 'react'
+
+import LoginPage from './LoginPage'
+import { clearToken, fetchCurrentUser, hasToken, type UserPublic } from './auth'
 
 export default function App() {
-  const [result, setResult] = useState<string>('(not called yet)')
+  const [user, setUser] = useState<UserPublic | null>(null)
+  const [booting, setBooting] = useState(true)
 
-  async function pingBackend() {
-    try {
-      const response = await api.get<Health>('/health')
-      setResult(`success: ${JSON.stringify(response.data)}`)
-    } catch (error) {
-      setResult(`failed: ${error instanceof Error ? error.message : String(error)}`)
+  // useEffect with [] deps = run ONCE after the first render.
+  useEffect(() => {
+    if (!hasToken()) {
+      setBooting(false)
+      return
     }
+    fetchCurrentUser()
+      .then(setUser)
+      // Token expired/invalid/deactivated account -> wipe it and fall
+      // back to the login form. apiErrorMessage would tell us which,
+      // but for the boot path the user action is the same either way.
+      .catch(() => clearToken())
+      .finally(() => setBooting(false))
+  }, [])
+
+  if (booting) {
+    return <p style={{ fontFamily: 'sans-serif', padding: '2rem' }}>Wczytywanie…</p>
+  }
+
+  if (!user) {
+    return <LoginPage onLoggedIn={setUser} />
   }
 
   return (
     <main style={{ fontFamily: 'sans-serif', padding: '2rem', maxWidth: 640 }}>
-      <h1>Fake Academy</h1>
-      <p>Frontend container is running (Vite dev server, no nginx yet).</p>
-      <button onClick={pingBackend}>GET /health</button>
-      <pre style={{ background: '#f5f5f5', padding: '1rem' }}>{result}</pre>
+      <h1>Witaj, {user.first_name}! 👋</h1>
+      <p>
+        Zalogowany jako <strong>{user.email}</strong> (rola: {user.role}).
+      </p>
+      <button onClick={() => { clearToken(); setUser(null) }}>
+        Wyloguj się
+      </button>
     </main>
   )
 }
