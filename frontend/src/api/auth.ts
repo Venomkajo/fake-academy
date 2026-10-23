@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios'
 
-import { api, TOKEN_KEY } from './api'
+import { api, TOKEN_KEY } from './client'
 
 export type Role = 'student' | 'teacher' | 'admin'
 

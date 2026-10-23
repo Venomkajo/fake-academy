@@ -1,13 +1,23 @@
-// Root component: a tiny three-state machine.
+// Root component: auth gate + the routed app shell.
 //
-//   booting ──token?──▶ /auth/me ──ok──▶ logged in
+//   booting ──token?──▶ /auth/me ──ok──▶ logged in (Layout + routes)
 //     │ no                   └─401─▶ clear token ─▶ login form
 //     └───────────────────────────────────────────▶ login form
+//
+// After login the URL decides what renders inside the shared Layout.
+// <Routes> is only reachable when `user` is set, so every route below
+// is implicitly protected — you cannot deep-link into the app logged
+// out. If individual guards are ever needed, move the gate into a
+// <RequireAuth> wrapper route instead of relying on this single check.
 
 import { useEffect, useState } from 'react'
+import { Route, Routes } from 'react-router-dom'
 
-import LoginPage from './LoginPage'
-import { clearToken, fetchCurrentUser, hasToken, type UserPublic } from './auth'
+import { clearToken, fetchCurrentUser, hasToken, type UserPublic } from './api/auth'
+import Layout from './components/layout/Layout'
+import DashboardPage from './pages/DashboardPage'
+import LoginPage from './pages/LoginPage'
+import PlaceholderPage from './pages/PlaceholderPage'
 
 export default function App() {
   const [user, setUser] = useState<UserPublic | null>(null)
@@ -28,8 +38,13 @@ export default function App() {
       .finally(() => setBooting(false))
   }, [])
 
+  function handleLogout() {
+    clearToken()
+    setUser(null)
+  }
+
   if (booting) {
-    return <p style={{ fontFamily: 'sans-serif', padding: '2rem' }}>Wczytywanie…</p>
+    return <p className="muted" style={{ padding: '2rem' }}>Wczytywanie…</p>
   }
 
   if (!user) {
@@ -37,14 +52,23 @@ export default function App() {
   }
 
   return (
-    <main style={{ fontFamily: 'sans-serif', padding: '2rem', maxWidth: 640 }}>
-      <h1>Witaj, {user.first_name}! 👋</h1>
-      <p>
-        Zalogowany jako <strong>{user.email}</strong> (rola: {user.role}).
-      </p>
-      <button onClick={() => { clearToken(); setUser(null) }}>
-        Wyloguj się
-      </button>
-    </main>
+    <Routes>
+      {/* Pathless "layout route": wraps every child below in the shared
+          Header + Navbar + Footer shell (see components/layout/Layout.tsx). */}
+      <Route element={<Layout user={user} onLogout={handleLogout} />}>
+        {/* index = the "/" route (no path of its own) */}
+        <Route index element={<DashboardPage user={user} />} />
+
+        {/* Placeholder screens — replace with real pages one by one. */}
+        <Route path="oceny" element={<PlaceholderPage title="Oceny" />} />
+        <Route path="plan" element={<PlaceholderPage title="Plan zajęć" />} />
+        <Route path="wiadomosci" element={<PlaceholderPage title="Wiadomości" />} />
+        <Route path="materialy" element={<PlaceholderPage title="Materiały" />} />
+
+        {/* Nothing matched the URL -> friendly 404 instead of a blank page. */}
+        <Route path="*" element={<PlaceholderPage title="404 — nie znaleziono strony" />} />
+      </Route>
+    </Routes>
   )
 }
+

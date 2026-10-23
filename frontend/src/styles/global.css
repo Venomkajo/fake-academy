@@ -1,0 +1,217 @@
+/* ==========================================================================
+   Fake Academy — global stylesheet & design tokens
+   --------------------------------------------------------------------------
+   * :root variables are the "design system": change a color/radius here
+     and it changes everywhere. Never hardcode the same value twice.
+   * Component classes live in this single file for now; when it grows,
+     split it per component (or switch to CSS Modules — Vite supports
+     them out of the box).
+   ========================================================================== */
+
+:root {
+  /* palette */
+  --color-primary: #274c77;
+  --color-primary-strong: #1b3557;
+  --color-bg: #f4f6f9;
+  --color-surface: #ffffff;
+  --color-border: #dde3ea;
+  --color-text: #1f2933;
+  --color-text-muted: #6b7684;
+  --color-danger: #b3261e;
+
+  /* geometry */
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+
+  /* sizing */
+  --content-width: 1100px;
+}
+
+/* --- minimal reset ------------------------------------------------------ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, 'Segoe UI', Roboto, Arial, sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+a:hover {
+  color: var(--color-primary-strong);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+/* --- generic helpers ----------------------------------------------------- */
+
+.container {
+  max-width: var(--content-width);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+}
+
+.btn {
+  font: inherit;
+  padding: 0.45rem 1.1rem;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--color-primary-strong);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: inherit;
+  border-color: var(--color-border);
+  padding: 0.3rem 0.8rem;
+}
+
+.btn-ghost:hover {
+  background: var(--color-bg);
+  color: inherit;
+}
+
+/* --- app shell: Header + Navbar + <main> + Footer ------------------------ */
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* flex: 1 pushes the footer down to the viewport bottom on short pages */
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-width);
+  margin-inline: auto;
+  padding: 1.5rem 1rem;
+}
+
+/* --- header --------------------------------------------------------------- */
+
+.app-header {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.app-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 60px;
+}
+
+.brand {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+/* ghost button needs light strokes inside the colored header */
+.app-header .btn-ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.app-header .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* --- navbar ---------------------------------------------------------------- */
+
+.app-nav {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky; /* stays visible while the page scrolls */
+  top: 0;
+  z-index: 10;
+}
+
+.nav-inner {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto; /* links scroll sideways on narrow screens */
+}
+
+.nav-link {
+  padding: 0.75rem 1rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+
+.nav-link:hover {
+  color: var(--color-primary);
+}
+
+/* NavLink adds .active automatically for the link matching the URL */
+.nav-link.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* --- footer ---------------------------------------------------------------- */
+
+.app-footer {
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.app-footer .container {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-block: 1rem;
+}
