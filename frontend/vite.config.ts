@@ -14,5 +14,14 @@ export default defineConfig({
     port: 5173,
     // fail loudly if 5173 is taken
     strictPort: true,
+    watch: {
+      // Docker on Windows: ./frontend reaches the container through a
+      // FUSE-style file share that does NOT emit inotify events — Vite
+      // hears nothing when files change and HMR silently dies (verified:
+      // even edits made inside the container produced no watcher events).
+      // Polling (reading mtimes directly) works through the share.
+      // node_modules/.git stay excluded (Vite defaults) -> low CPU cost.
+      usePolling: true,
+    },
   },
 })

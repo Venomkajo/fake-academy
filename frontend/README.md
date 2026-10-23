@@ -19,6 +19,11 @@ w kontenerze: `docker compose exec frontend npm install <pakiet>`
 (aktualizuje `package.json` i `package-lock.json` na hoście przez mount).
 `--build` jest potrzebny tylko po zmianie `Dockerfile` lub wersji Node.
 
+HMR działa dzięki `usePolling: true` w `vite.config.ts` — bind mount
+z Windows do kontenera nie emituje zdarzeń inotify, więc Vite odpytuje
+pliki (polling); bez tego zapisy w edytorze byłyby niewidoczne dla
+kontenera i strona by się nie odświeżała.
+
 ## Struktura `src/`
 
 ```
