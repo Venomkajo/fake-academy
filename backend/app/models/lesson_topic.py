@@ -1,3 +1,5 @@
+"""LessonTopic ORM model."""
+
 import datetime
 
 import sqlalchemy as sa
@@ -7,9 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the LessonTopic table — what was (or will be) taught
-# during a particular dated lesson of one teaching assignment.
 class LessonTopic(Base):
+    """What was (or will be) taught during a particular dated lesson of one teaching assignment."""
+
     __tablename__ = "lesson_topics"
 
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)

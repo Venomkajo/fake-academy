@@ -1,3 +1,5 @@
+"""GradeCategory ORM model."""
+
 import decimal
 
 import sqlalchemy as sa
@@ -7,9 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the GradeCategory table — one row per grading bucket
-# of a teaching assignment (e.g. "Exam 60%", "Homework 40%").
 class GradeCategory(Base):
+    """One grading bucket of one teaching assignment (e.g. "Exam 60%", "Homework 40%")."""
+
     __tablename__ = "grade_categories"
     __table_args__ = (
         # Category names are unique within an assignment — "Exam" twice in

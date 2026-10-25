@@ -1,12 +1,4 @@
-"""Seed the database with development users: every role, plus one
-DEACTIVATED student (to test the 403 path of POST /auth/login).
-
-Usage (from the backend/ directory, with the docker compose db running):
-
-    PowerShell:
-        $env:DATABASE_URL = "postgresql+psycopg://dev:dev@localhost:5432/dev"
-        $env:JWT_SECRET   = "<same value as .env>"
-        python scripts/seed.py
+"""Seed the database with development users.
 
 Idempotent: users are matched by email and existing ones are skipped,
 so it is safe to run again at any time.

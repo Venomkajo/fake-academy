@@ -1,3 +1,5 @@
+"""Material ORM model."""
+
 import datetime
 
 import sqlalchemy as sa
@@ -7,9 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the Material table — one row per uploaded file
-# attached to a subject (the file body itself lives in MinIO/S3 storage).
 class Material(Base):
+    """One row per uploaded file attached to a subject (the file body itself lives in MinIO/S3 storage)."""
+
     __tablename__ = "materials"
 
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)

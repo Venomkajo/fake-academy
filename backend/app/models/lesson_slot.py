@@ -1,3 +1,5 @@
+"""LessonSlot ORM model."""
+
 import datetime
 
 import sqlalchemy as sa
@@ -7,9 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the LessonSlot table — a weekly recurring timetable
-# entry ("every Tuesday, 10:15–11:45, room 3.14") of one teaching assignment.
 class LessonSlot(Base):
+    """A weekly recurring timetable entry ("every Tuesday, 10:15–11:45, room 3.14") of one teaching assignment."""
+
     __tablename__ = "lesson_slots"
 
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)

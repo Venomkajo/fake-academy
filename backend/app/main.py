@@ -1,3 +1,5 @@
+"""FastAPI application entrypoint: CORS, router mounting, health probes."""
+
 import sqlalchemy as sa
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,14 +30,13 @@ app.include_router(admin.router)
 
 @app.get("/health")
 def health():
-    # Liveness probe: just checks the API process is up.
+    """Liveness probe: just checks the API process is up."""
     return {"status": "ok"}
 
 @app.get("/health/db")
 def health_db(db=Depends(get_db)):
-    # Readiness probe: also checks the database actually answers.
+    """Readiness probe: also checks the database actually answers."""
     try:
-        # Simple query to check database connectivity
         db.execute(sa.text("SELECT 1"))
         return {"status": "ok"}
     except Exception as e:

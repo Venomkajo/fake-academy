@@ -1,3 +1,5 @@
+"""User accounts: one users table for students, teachers and admins alike."""
+
 import datetime
 import enum
 
@@ -8,15 +10,17 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# Enum for user roles
 class UserRole(enum.Enum):
+    """Roles an account can hold; drives RBAC checks (see app/deps.py)."""
+
     STUDENT = "student"
     TEACHER = "teacher"
     ADMIN = "admin"
 
 
-# SQLAlchemy model for the User table
 class User(Base):
+    """One account per person; users.id doubles as every other table's student/teacher id."""
+
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)

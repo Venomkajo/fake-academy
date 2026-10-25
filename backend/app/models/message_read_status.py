@@ -1,3 +1,5 @@
+"""MessageReadStatus ORM model."""
+
 import datetime
 
 import sqlalchemy as sa
@@ -7,9 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the MessageReadStatus table — per-user read receipts
-# for messages (one row per recipient per message).
 class MessageReadStatus(Base):
+    """Per-user read receipts for messages (one row per recipient per message)."""
+
     __tablename__ = "message_read_statuses"
     __table_args__ = (
         # One receipt per user per message — a second row for the same pair

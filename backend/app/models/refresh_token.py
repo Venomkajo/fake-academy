@@ -1,3 +1,5 @@
+"""RefreshToken ORM model."""
+
 import datetime
 
 import sqlalchemy as sa
@@ -7,8 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the RefreshToken table
 class RefreshToken(Base):
+    """One row per issued refresh token; only the SHA-256 hash is kept."""
+
     __tablename__ = "refresh_tokens"
 
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)

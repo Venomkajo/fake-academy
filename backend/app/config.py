@@ -1,3 +1,10 @@
+"""Runtime configuration, read from environment variables.
+
+Everything config-related lives here, so the rest of the app imports plain
+names (JWT_SECRET, CORS_ORIGINS, ...) and never touches os.environ — one
+place to look, one place to fail loudly.
+"""
+
 import os
 
 # Secret used to sign/verify JWTs — required, the app fails fast without it.

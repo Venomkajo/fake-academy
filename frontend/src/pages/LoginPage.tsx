@@ -1,9 +1,13 @@
+// The login screen — shown whenever the user is not authenticated.
+//
+// On success it immediately fetches the fresh user via /auth/me and
+// HANDS IT UP to App through onLoggedIn; the page itself owns no
+// session state.
 import { useState } from 'react'
 
 import { apiErrorMessage, fetchCurrentUser, login, type UserPublic } from '../api/auth'
 
 // Props: the ONLY way a parent (App) passes data/callbacks down.
-// We don't store the user here — after success we HAND IT UP.
 interface Props {
   onLoggedIn: (user: UserPublic) => void
 }

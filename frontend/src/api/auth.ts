@@ -2,8 +2,10 @@ import { isAxiosError } from 'axios'
 
 import { api, TOKEN_KEY } from './client'
 
+/** Account roles; mirror of the backend's UserRole enum (RBAC lives in app/deps.py). */
 export type Role = 'student' | 'teacher' | 'admin'
 
+/** User as the API returns it (/auth/me, /admin/users) — no password hash, ever. */
 export interface UserPublic {
   id: number
   email: string
@@ -13,6 +15,7 @@ export interface UserPublic {
   is_active: boolean
 }
 
+/** Response body of POST /auth/login. */
 export interface TokenResponse {
   access_token: string
   token_type: string
@@ -21,10 +24,12 @@ export interface TokenResponse {
 
 // --- token storage -------------------------------------------------------
 
+/** Is an access token saved in localStorage? */
 export function hasToken(): boolean {
   return localStorage.getItem(TOKEN_KEY) !== null
 }
 
+/** Forget the saved access token (logout). */
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY)
 }
@@ -49,6 +54,7 @@ export async function fetchCurrentUser(): Promise<UserPublic> {
 
 // --- error translation ---------------------------------------------------
 
+/** Translate any thrown error into a user-safe Polish message. */
 export function apiErrorMessage(error: unknown): string {
   if (isAxiosError(error)) {
     const detail: unknown = error.response?.data?.detail

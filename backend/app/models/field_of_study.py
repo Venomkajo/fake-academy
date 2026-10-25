@@ -1,3 +1,5 @@
+"""FieldOfStudy ORM model."""
+
 import sqlalchemy as sa
 
 from sqlalchemy.orm import Mapped, mapped_column
@@ -5,8 +7,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the FieldOfStudy table
 class FieldOfStudy(Base):
+    """A field of study, e.g. "Computer Science"; student groups belong to one."""
+
     __tablename__ = "fields_of_study"
 
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)

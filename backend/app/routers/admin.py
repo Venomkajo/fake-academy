@@ -1,4 +1,4 @@
-"""Users domain module: admin account management, under /users.
+"""Admin domain module: admin account management, under /admin.
 
 First endpoint: GET /admin/users — list all accounts (admin only). Later
 this module grows the rest of the README's admin scope: creating
@@ -22,8 +22,7 @@ def list_users(
     _admin: User = Depends(require_roles(UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ) -> list[UserPublic]:
-    """List every account. Admin-only.
-    """
+    """List every account. Admin-only."""
     users = db.scalars(sa.select(User).order_by(User.id)).all()
     # response_model=list[UserPublic] + from_attributes handles each
     # row through the allowlist, same as /auth/me — one schema guards

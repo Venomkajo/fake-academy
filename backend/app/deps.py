@@ -1,3 +1,5 @@
+"""Reusable FastAPI dependencies: who is calling and what roles they hold."""
+
 import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer

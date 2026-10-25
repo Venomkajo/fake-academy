@@ -1,3 +1,5 @@
+"""Grade ORM model."""
+
 import datetime
 import decimal
 
@@ -8,9 +10,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the Grade table — one student's result in one grade
-# category of one teaching assignment.
 class Grade(Base):
+    """One student's result in one grade category of one teaching assignment."""
+
     __tablename__ = "grades"
     __table_args__ = (
         # A student can receive at most one grade per category — a second

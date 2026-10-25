@@ -1,3 +1,5 @@
+"""Authentication endpoints (/auth): JWT login and GET /auth/me (the identity probe the frontend calls right after login)."""
+
 import sqlalchemy as sa
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -59,14 +61,16 @@ def login(body: LoginRequest, db: Session = Depends(get_db)) -> TokenResponse:
 
 @router.get("/me", response_model=UserPublic)
 def me(current_user: User = Depends(get_current_user)) -> UserPublic:
-    """Who am I? The frontend calls this right after login to fill its
-    user context (name in the navbar, role-based menu, ...).
+    """Return the caller's own account ("who am I?").
+
+    The frontend calls this right after login to fill its user context
+    (name in the navbar, role-based menu, ...).
     """
     return current_user
 
 
 def _invalid_credentials() -> HTTPException:
-    # Generic 401 for any login failure (unknown email or wrong password).
+    """Return the generic 401 used for any login failure (unknown email or wrong password)."""
     return HTTPException(
         status_code=401,
         detail="Invalid email or password",

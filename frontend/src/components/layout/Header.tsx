@@ -14,7 +14,7 @@ export default function Header({ user, onLogout }: Props) {
   return (
     <header className="app-header">
       <div className="container app-header-inner">
-        {/* TODO(you): swap the emoji for a logo/SVG when you have one. */}
+        {/* TODO: swap the emoji for a logo/SVG when you have one. */}
         <span className="brand">🎓 Fake Academy</span>
 
         <div className="user-chip">

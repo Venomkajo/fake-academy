@@ -1,3 +1,6 @@
+// Shared Axios instance every module talks to the backend through, plus
+// the localStorage key the auth flow stores the JWT under. The request
+// interceptor below attaches the token to every outgoing request.
 import axios from 'axios'
 
 

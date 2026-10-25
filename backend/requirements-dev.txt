@@ -1,0 +1,4 @@
+# Development-only tooling — NOT installed in the Docker image.
+# Install into the project venv (the .venv at the repository root):
+#     pip install -r backend/requirements-dev.txt
+ruff==0.17.2

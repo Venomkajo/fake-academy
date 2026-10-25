@@ -1,3 +1,5 @@
+"""StudentGroup ORM model."""
+
 import sqlalchemy as sa
 
 from sqlalchemy.orm import Mapped, mapped_column
@@ -5,8 +7,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the StudentGroup table
 class StudentGroup(Base):
+    """A student group, e.g. "CS-2026-A", belonging to one field of study."""
+
     __tablename__ = "student_groups"
 
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)

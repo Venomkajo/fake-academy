@@ -1,3 +1,5 @@
+"""Notification ORM model."""
+
 import datetime
 import enum
 
@@ -9,17 +11,18 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# Enum for notification types
 class NotificationType(enum.Enum):
+    """Kinds of events that create a notification inbox entry."""
+
     GRADE = "grade"
     MESSAGE = "message"
     FEEDBACK = "feedback"
     PLAN_CHANGE = "plan_change"
 
 
-# SQLAlchemy model for the Notification table — one inbox entry per event
-# (new grade, new message, ...), shown in the user's notification bell.
 class Notification(Base):
+    """One inbox entry per event (new grade, new message, ...), shown in the user's notification bell."""
+
     __tablename__ = "notifications"
 
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)

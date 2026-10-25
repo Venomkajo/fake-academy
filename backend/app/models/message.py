@@ -1,3 +1,5 @@
+"""Message ORM model."""
+
 import datetime
 
 import sqlalchemy as sa
@@ -7,9 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the Message table — direct user-to-user messages as
-# well as announcements (ogłoszenia) sent to a whole student group.
 class Message(Base):
+    """Direct user-to-user messages as well as announcements sent to a whole student group."""
+
     __tablename__ = "messages"
     __table_args__ = (
         # A message must be addressed somewhere: either to one recipient

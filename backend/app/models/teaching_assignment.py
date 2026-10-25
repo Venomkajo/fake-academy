@@ -1,3 +1,5 @@
+"""TeachingAssignment ORM model."""
+
 import sqlalchemy as sa
 
 from sqlalchemy.orm import Mapped, mapped_column
@@ -5,9 +7,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the TeachingAssignment table — which teacher teaches
-# which subject to which student group.
 class TeachingAssignment(Base):
+    """Which teacher teaches which subject to which student group."""
+
     __tablename__ = "teaching_assignments"
     __table_args__ = (
         # The same (subject, teacher, group) triple can be assigned at most

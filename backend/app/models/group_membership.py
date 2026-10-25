@@ -1,3 +1,5 @@
+"""GroupMembership ORM model: the students-to-groups association table."""
+
 import sqlalchemy as sa
 
 from sqlalchemy.orm import Mapped, mapped_column
@@ -5,9 +7,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the GroupMembership table — the association table
-# linking students (users) to student groups (many-to-many).
 class GroupMembership(Base):
+    """Association row linking one student (user) to one student group (many-to-many)."""
+
     __tablename__ = "group_memberships"
     __table_args__ = (
         # A student can join a given group at most once.

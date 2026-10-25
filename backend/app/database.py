@@ -1,3 +1,5 @@
+"""Database setup: the engine, the session factory and the ORM base."""
+
 import os
 
 from sqlalchemy import create_engine
@@ -11,13 +13,12 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
-# Parent of every ORM model; Alembic autogenerate reads its metadata.
 class Base(DeclarativeBase):
-    pass
+    """Parent of every ORM model; Alembic autogenerate reads its metadata."""
 
 
-# Function to get a database session for dependency injection in FastAPI
 def get_db():
+    """Yield one database session per request (FastAPI dependency injection)."""
     db = SessionLocal()
     try:
         yield db

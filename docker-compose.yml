@@ -19,11 +19,11 @@ services:
     image: chrislusf/seaweedfs:latest
     command: "server -dir=/data -s3"
     environment:
-      # na start brak autentykacji S3 (sieć wewnętrzna Compose);
-      # klucze dodamy przy konfiguracji identity w SeaweedFS
+      # No S3 auth for now (internal Compose network only); keys will
+      # be added when configuring identity in SeaweedFS
       WEED_S3_URL: http://storage:8333
     ports:
-      - "8888:8888"      # web UI filera (podgląd plików)
+      - "8888:8888"      # filer web UI (browse stored files)
     volumes:
       - seaweeddata:/data
     healthcheck:

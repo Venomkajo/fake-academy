@@ -1,3 +1,5 @@
+"""Password hashing (bcrypt) and JWT access tokens (PyJWT)."""
+
 import datetime
 
 import bcrypt

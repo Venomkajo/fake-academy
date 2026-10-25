@@ -1,3 +1,5 @@
+"""User-shaped API responses — never expose the password hash."""
+
 import pydantic
 
 from app.models.user import UserRole

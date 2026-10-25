@@ -1,3 +1,5 @@
+"""Request/response schemas for the /auth endpoints."""
+
 import pydantic
 
 
