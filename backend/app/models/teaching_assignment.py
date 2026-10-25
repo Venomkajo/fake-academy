@@ -22,7 +22,7 @@ class TeachingAssignment(Base):
     subject_id: Mapped[int] = mapped_column(
         sa.Integer, sa.ForeignKey("subjects.id"), index=True
     )
-    # Teacher's account — users.id doubles as the teacher id (confirmed).
+    # Teacher's account — users.id doubles as the teacher id.
     teacher_id: Mapped[int] = mapped_column(
         sa.Integer, sa.ForeignKey("users.id"), index=True
     )

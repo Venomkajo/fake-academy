@@ -1,4 +1,4 @@
-# Fake Academy 🎓
+# Fake Academy
 
 Nowoczesny system zarządzania nauczaniem dla uczelni — platforma łącząca
 oceny, komunikację, plan zajęć i materiały dydaktyczne w jednym miejscu.
@@ -88,13 +88,7 @@ cztery kontenery: `frontend`, `backend`, `db`, `storage`.
 Opinia jest w bazie powiązana z autorem — wyłącznie po to, by zweryfikować,
 czy student faktycznie uczęszcza na dane zajęcia, i ograniczyć spam
 (jedna opinia na temat). Powiązanie to **nigdy nie jest zwracane
-przez API** — wykładowca nie ma technicznej możliwości poznamy autora.
-
-## Dokumentacja
-
-Szczegółowy opis projektu (aktorzy, procesy biznesowe, funkcjonalności,
-diagramy, schemat bazy danych, wdrożenie) znajduje się w dokumentacji
-projektowej.
+przez API** — wykładowca nie ma technicznej możliwości poznać autora.
 
 # Autorzy:
-Kajetan 53497
+Kajetan Respondek, 53497, @Venomkajo

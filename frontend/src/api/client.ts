@@ -1,8 +1,10 @@
 import axios from 'axios'
 
-// Where the browser reaches the backend. This is the HOST port
-// published in docker-compose.yml (8001), later this can become an env var.
-export const API_BASE_URL = 'http://localhost:8001'
+
+// Where the browser reaches the backend. Set VITE_FASTAPI_BASE_URL in
+// frontend/.env — Vite only exposes variables prefixed with VITE_ to
+// the client (import.meta.env). Defaults to localhost:8001
+export const API_BASE_URL = import.meta.env.VITE_FASTAPI_BASE_URL ?? 'http://localhost:8001'
 
 export const TOKEN_KEY = 'fa_access_token'
 

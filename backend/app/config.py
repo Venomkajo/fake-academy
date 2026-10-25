@@ -12,4 +12,4 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("JWT_EXPIRE_MINUTES", "60"))
 # enforces CORS — this list is us answering the browser's question
 # "may origin X talk to you?". Comma-separated; the Vite dev server is
 # published at http://localhost:5173.
-CORS_ORIGINS = [origin.strip() for origin in os.environ.get("FRONTEND_ENDPOINT", "").split(",") if origin.strip()]
+CORS_ORIGINS = [origin.strip().rstrip("/") for origin in os.environ.get("FRONTEND_ENDPOINT", "").split(",") if origin.strip()]

@@ -14,8 +14,7 @@ export default function DashboardPage({ user }: Props) {
         Zalogowany jako <strong>{user.email}</strong> (rola: {user.role}).
       </p>
       <p className="muted">
-        To jest placeholder strony głównej — zastąp go prawdziwym pulpitem.
-        Użyj nawigacji powyżej, aby zobaczyć kolejne podstrony.
+        Placeholder.
       </p>
     </section>
   )

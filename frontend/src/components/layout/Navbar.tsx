@@ -9,7 +9,7 @@ import { NavLink } from 'react-router-dom'
 // Single source of truth for the bar: add/remove items HERE,
 // then create the matching route in App.tsx and page in src/pages/.
 //
-// TODO(you): make the list role-aware, e.g.
+// TODO: make the list role-aware, e.g.
 //   const links = LINKS.filter((l) => !l.roles || l.roles.includes(user.role))
 // once Navbar receives the user (add a `user` prop, see Header).
 const LINKS = [

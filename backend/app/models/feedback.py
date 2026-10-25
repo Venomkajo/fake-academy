@@ -7,8 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
 
 
-# SQLAlchemy model for the Feedback table — a teacher's free-form comment on
-# one dated lesson topic.
+# SQLAlchemy model for the Feedback table — a student's comment on a lesson topic. The author_id is only used to verify that the student actually attended the lesson, and is never returned by the API.
 class Feedback(Base):
     __tablename__ = "feedback"
 

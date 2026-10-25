@@ -32,9 +32,9 @@ export default function App() {
     fetchCurrentUser()
       .then(setUser)
       // Token expired/invalid/deactivated account -> wipe it and fall
-      // back to the login form. apiErrorMessage would tell us which,
-      // but for the boot path the user action is the same either way.
+      // back to the login form.
       .catch(() => clearToken())
+      // Regardless of success or failure, we're done booting and can render
       .finally(() => setBooting(false))
   }, [])
 
@@ -59,13 +59,13 @@ export default function App() {
         {/* index = the "/" route (no path of its own) */}
         <Route index element={<DashboardPage user={user} />} />
 
-        {/* Placeholder screens — replace with real pages one by one. */}
+        {/* Placeholder screens — replaced with real pages one by one. */}
         <Route path="oceny" element={<PlaceholderPage title="Oceny" />} />
         <Route path="plan" element={<PlaceholderPage title="Plan zajęć" />} />
         <Route path="wiadomosci" element={<PlaceholderPage title="Wiadomości" />} />
         <Route path="materialy" element={<PlaceholderPage title="Materiały" />} />
 
-        {/* Nothing matched the URL -> friendly 404 instead of a blank page. */}
+        {/* Nothing matched the URL -> 404 instead of a blank page. */}
         <Route path="*" element={<PlaceholderPage title="404 — nie znaleziono strony" />} />
       </Route>
     </Routes>

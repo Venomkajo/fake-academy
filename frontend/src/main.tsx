@@ -12,8 +12,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import App from './App'
 
-// The bundler handles CSS imports at runtime; TypeScript has no declaration for this file.
-// @ts-expect-error CSS side-effect import
 import './styles/global.css'
 
 // One client for the whole app, created ONCE outside the component
