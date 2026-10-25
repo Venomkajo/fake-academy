@@ -411,12 +411,5 @@ w interfejsie pozostają polskie.
   przeczytanym trwale je ukrywa z licznika.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
-## Anonimowość opinii
-
-Opinia jest w bazie powiązana z autorem — wyłącznie po to, by zweryfikować,
-czy student faktycznie uczęszcza na dane zajęcia, i ograniczyć spam
-(jedna opinia na temat). Powiązanie to **nigdy nie jest zwracane
-przez API** — wykładowca nie ma technicznej możliwości poznać autora.
-
 # Autorzy:
 Kajetan Respondek, 53497, @Venomkajo
