@@ -14,10 +14,10 @@ import { NavLink } from 'react-router-dom'
 // once Navbar receives the user (add a `user` prop, see Header).
 const LINKS = [
   { to: '/', label: 'Pulpit' },
-  { to: '/oceny', label: 'Oceny' },
-  { to: '/plan', label: 'Plan zajęć' },
-  { to: '/wiadomosci', label: 'Wiadomości' },
-  { to: '/materialy', label: 'Materiały' },
+  { to: '/grades', label: 'Oceny' },
+  { to: '/schedule', label: 'Plan zajęć' },
+  { to: '/messages', label: 'Wiadomości' },
+  { to: '/materials', label: 'Materiały' },
 ] as const
 
 export default function Navbar() {
@@ -26,7 +26,7 @@ export default function Navbar() {
       <div className="container nav-inner">
         {LINKS.map(({ to, label }) => (
           // end={true} on "/" => "Pulpit" is active ONLY on the exact
-          // index route, not on every /oceny, /plan, ... URL too.
+          // index route, not on every /grades, /schedule, ... URL too.
           <NavLink key={to} to={to} end={to === '/'} className="nav-link">
             {label}
           </NavLink>

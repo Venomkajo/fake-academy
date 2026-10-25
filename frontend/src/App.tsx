@@ -59,11 +59,12 @@ export default function App() {
         {/* index = the "/" route (no path of its own) */}
         <Route index element={<DashboardPage user={user} />} />
 
-        {/* Placeholder screens — replaced with real pages one by one. */}
-        <Route path="oceny" element={<PlaceholderPage title="Oceny" />} />
-        <Route path="plan" element={<PlaceholderPage title="Plan zajęć" />} />
-        <Route path="wiadomosci" element={<PlaceholderPage title="Wiadomości" />} />
-        <Route path="materialy" element={<PlaceholderPage title="Materiały" />} />
+        {/* Placeholder screens — replaced with real pages one by one.
+            URL paths are English/ASCII; page titles stay Polish. */}
+        <Route path="grades" element={<PlaceholderPage title="Oceny" />} />
+        <Route path="schedule" element={<PlaceholderPage title="Plan zajęć" />} />
+        <Route path="messages" element={<PlaceholderPage title="Wiadomości" />} />
+        <Route path="materials" element={<PlaceholderPage title="Materiały" />} />
 
         {/* Nothing matched the URL -> 404 instead of a blank page. */}
         <Route path="*" element={<PlaceholderPage title="404 — nie znaleziono strony" />} />
