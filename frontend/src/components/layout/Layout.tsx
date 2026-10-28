@@ -25,7 +25,7 @@ export default function Layout({ user, onLogout }: Props) {
   return (
     <div className="app-shell">
       <Header user={user} onLogout={onLogout} />
-      <Navbar />
+      <Navbar user={user} />
       <main className="app-main">
         <Outlet />
       </main>

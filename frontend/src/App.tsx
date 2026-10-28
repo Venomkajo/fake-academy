@@ -66,6 +66,11 @@ export default function App() {
         <Route path="messages" element={<PlaceholderPage title="Wiadomości" />} />
         <Route path="materials" element={<PlaceholderPage title="Materiały" />} />
 
+        <Route path="admin/users" element={<PlaceholderPage title="Użytkownicy" />} />
+        <Route path="admin/structure" element={<PlaceholderPage title="Struktura uczelni" />} />
+        <Route path="admin/schedule" element={<PlaceholderPage title="Edytor planu zajęć" />} />
+        <Route path="admin/statistics" element={<PlaceholderPage title="Statystyki systemowe" />} />
+
         {/* Nothing matched the URL -> 404 instead of a blank page. */}
         <Route path="*" element={<PlaceholderPage title="404 — nie znaleziono strony" />} />
       </Route>
