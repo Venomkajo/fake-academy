@@ -3,7 +3,6 @@
 // Providers wrap <App/> so every component below can use them:
 //   StrictMode          — double-invokes effects in dev to surface bugs
 //   QueryClientProvider — TanStack Query: fetching/caching server data
-//                         (ready to use, not consumed anywhere yet)
 //   BrowserRouter       — client-side routing: URL ↔ component mapping
 import React from 'react'
 import ReactDOM from 'react-dom/client'

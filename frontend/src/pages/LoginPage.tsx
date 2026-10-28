@@ -1,9 +1,12 @@
 // The login screen — shown whenever the user is not authenticated.
 //
-// On success it immediately fetches the fresh user via /auth/me and
-// HANDS IT UP to App through onLoggedIn; the page itself owns no
-// session state.
+// The whole login round-trip is a useMutation (TanStack Query's tool
+// for commands that change server state): it exposes the isPending/
+// error flags we used to store by hand in useState, and hands the
+// fetched user UP to App in onSuccess. The page still owns only the
+// two controlled form fields; no session state lives here.
 import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 
 import { apiErrorMessage, fetchCurrentUser, login, type UserPublic } from '../api/auth'
 
@@ -15,23 +18,28 @@ interface Props {
 export default function LoginPage({ onLoggedIn }: Props) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setError(null)
-    setBusy(true)
-    try {
+  // Login is a COMMAND (POST /auth/login), not cacheable server state,
+  // so a mutation, not a query. One async action covers both steps of
+  // the round-trip: POST /auth/login (api/auth.ts stores the returned
+  // token in localStorage), then GET /auth/me for the fresh user data.
+  const loginMutation = useMutation({
+    mutationFn: async (): Promise<UserPublic> => {
       await login(email, password)
-      const user = await fetchCurrentUser()
-      onLoggedIn(user)
-    } catch (err) {
-      setError(apiErrorMessage(err))
-    } finally {
-      setBusy(false)
-    }
+      return fetchCurrentUser()
+    },
+    onSuccess: (user) => onLoggedIn(user),
+  })
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    loginMutation.mutate()
   }
+
+  // Derived, not stored: the mutation tracks busy/error, so
+  // the render just reads them (v5 names the flag `isPending`).
+  const busy = loginMutation.isPending
+  const error = loginMutation.isError ? apiErrorMessage(loginMutation.error) : null
 
   return (
     <main className="app-main">
