@@ -11,7 +11,15 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import require_roles
+
+from app.models.field_of_study import FieldOfStudy
+from app.models.group_membership import GroupMembership
+from app.models.student_group import StudentGroup
+from app.models.subject import Subject
+from app.models.teaching_assignment import TeachingAssignment
 from app.models.user import User, UserRole
+
+from app.schemas.structure import StructureResponse
 from app.schemas.user import UserPublic
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -28,3 +36,74 @@ def list_users(
     # row through the allowlist, same as /auth/me — one schema guards
     # every user-shaped response in the API.
     return users
+
+@router.get("/structure", response_model=StructureResponse)
+def get_structure(
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> StructureResponse:
+    """Return the whole university structure in one aggregate payload.
+
+    Fields of study, student groups, subjects and both assignment tables —
+    everything the /admin/structure panel's entity tabs need, in a single
+    request. Only FK ids travel here: teacher/student names are resolved
+    client-side from the /admin/users list.
+    """
+    return StructureResponse(
+        fields=db.scalars(sa.select(FieldOfStudy).order_by(FieldOfStudy.id)).all(),
+        groups=db.scalars(sa.select(StudentGroup).order_by(StudentGroup.id)).all(),
+        subjects=db.scalars(sa.select(Subject).order_by(Subject.id)).all(),
+        teaching_assignments=db.scalars(
+            sa.select(TeachingAssignment).order_by(TeachingAssignment.id)
+        ).all(),
+        group_memberships=db.scalars(
+            sa.select(GroupMembership).order_by(GroupMembership.id)
+        ).all(),
+    )
+
+@router.get("/schedule")
+def get_schedule():
+    """Get the schedule of the application. Admin-only."""
+    # This is a placeholder for the actual implementation.
+    # You would typically query the database for the schedule information.
+    return []
+
+@router.get("/statistics")
+def get_statistics():
+    """Get statistics of the application. Admin-only."""
+    # This is a placeholder for the actual implementation.
+    # You would typically query the database for the statistics information.
+    return []
+
+@router.put("/users/{user_id}/role", response_model=UserPublic)
+def change_user_role(
+    user_id: int,
+    new_role: UserRole,
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> UserPublic:
+    """Change a user's role. Admin-only."""
+    user = db.get(User, user_id)
+    if not user:
+        raise sa.exc.NoResultFound(f"User with id {user_id} not found")
+    user.role = new_role
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+@router.put("/users/{user_id}/deactivate", response_model=UserPublic)
+def deactivate_user(
+    user_id: int,
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> UserPublic:
+    """Deactivate a user's account. Admin-only."""
+    user = db.get(User, user_id)
+    if not user:
+        raise sa.exc.NoResultFound(f"User with id {user_id} not found")
+    user.is_active = False
+    db.commit()
+    db.refresh(user)
+
+    return user
