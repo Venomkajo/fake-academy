@@ -75,34 +75,41 @@ def get_statistics():
     # You would typically query the database for the statistics information.
     return []
 
-@router.put("/users/{user_id}/role", response_model=UserPublic)
-def change_user_role(
+@router.get("/users/{user_id}", response_model=UserPublic)
+def get_user(
     user_id: int,
-    new_role: UserRole,
     _admin: User = Depends(require_roles(UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ) -> UserPublic:
-    """Change a user's role. Admin-only."""
+    """Get user information by ID. Admin-only."""
     user = db.get(User, user_id)
     if not user:
         raise sa.exc.NoResultFound(f"User with id {user_id} not found")
-    user.role = new_role
-    db.commit()
-    db.refresh(user)
-
     return user
 
-@router.put("/users/{user_id}/deactivate", response_model=UserPublic)
-def deactivate_user(
+@router.put("/users/{user_id}", response_model=UserPublic)
+def edit_user(
     user_id: int,
+    updated_user: UserPublic,
     _admin: User = Depends(require_roles(UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ) -> UserPublic:
-    """Deactivate a user's account. Admin-only."""
+    """Edit user information. Admin-only."""
     user = db.get(User, user_id)
     if not user:
         raise sa.exc.NoResultFound(f"User with id {user_id} not found")
-    user.is_active = False
+
+    for field in ['first_name', 'last_name', 'email', 'role', 'is_active']:
+        if getattr(updated_user, field) is None:
+            raise ValueError(f"{field} cannot be None")
+
+    # Update user fields with new information
+    user.first_name = updated_user.first_name
+    user.last_name = updated_user.last_name
+    user.email = updated_user.email
+    user.role = updated_user.role
+    user.is_active = updated_user.is_active
+
     db.commit()
     db.refresh(user)
 

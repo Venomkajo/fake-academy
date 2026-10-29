@@ -1,6 +1,8 @@
-import { fetchAllUsers } from '../api/admin'
+import { fetchAllUsers } from '../../api/admin'
 
 import { useQuery } from '@tanstack/react-query'
+
+import EditUserButton from '../../components/admin/EditUserButton'
 
 export default function AdminUsersPage(){
 
@@ -16,7 +18,7 @@ export default function AdminUsersPage(){
       <div>
         {usersQuery.data?.map((user: Awaited<ReturnType<typeof fetchAllUsers>>[number]) => (
           <div key={user.email}>
-            {user.first_name} {user.last_name} ({user.email}) — {user.role}
+            {user.first_name} {user.last_name} ({user.email}) — {user.role} <EditUserButton user_id={user.id} />
           </div>
         ))}
       </div>

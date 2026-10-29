@@ -215,3 +215,14 @@ a:hover {
   gap: 1rem;
   padding-block: 1rem;
 }
+
+/* --- buttons ------------------------------------------------------------- */
+
+.edit-user-button {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  height: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
