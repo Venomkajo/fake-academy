@@ -24,6 +24,7 @@ import Layout from './components/layout/Layout'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import PlaceholderPage from './pages/PlaceholderPage'
+import AdminUsersPage from './pages/AdminUsersPage'
 
 /** Cache key of the logged-in user's data (GET /auth/me). */
 const ME_KEY = ['me'] as const
@@ -88,7 +89,7 @@ export default function App() {
         <Route path="messages" element={<PlaceholderPage title="Wiadomości" />} />
         <Route path="materials" element={<PlaceholderPage title="Materiały" />} />
 
-        <Route path="admin/users" element={<PlaceholderPage title="Użytkownicy" />} />
+        <Route path="admin/users" element={<AdminUsersPage />} />
         <Route path="admin/structure" element={<PlaceholderPage title="Struktura uczelni" />} />
         <Route path="admin/schedule" element={<PlaceholderPage title="Edytor planu zajęć" />} />
         <Route path="admin/statistics" element={<PlaceholderPage title="Statystyki systemowe" />} />
