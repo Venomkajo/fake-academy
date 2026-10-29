@@ -15,6 +15,6 @@ export async function fetchUserById(userId: number): Promise<UserPublic> {
 
 /** PUT /admin/users/{userId} — updates a user's information. */
 export async function updateUser(userId: number, updates: UserPublic): Promise<UserPublic> {
-  const response = await api.patch<UserPublic>(`/admin/users/${userId}`, updates)
+  const response = await api.put<UserPublic>(`/admin/users/${userId}`, updates)
   return response.data
 }
