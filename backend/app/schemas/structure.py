@@ -1,8 +1,9 @@
-"""Structure-shaped API responses (README A2): fields, groups, subjects, assignments.
+"""Structure-shaped API payloads (README A2): fields, groups, subjects, assignments.
 
-These mirror the ORM columns exactly — the /admin/structure panel already
-has /admin/users, so teacher/student NAMES are resolved client-side and
-only FK ids travel in these payloads.
+Public schemas shape responses and mirror the ORM columns exactly — the
+/admin/structure panel already has /admin/users, so teacher/student NAMES
+are resolved client-side and only FK ids travel in these payloads. The
+Create/Update schemas at the bottom shape the write endpoints' bodies.
 """
 
 import pydantic
@@ -73,3 +74,81 @@ class StructureResponse(pydantic.BaseModel):
     subjects: list[SubjectPublic]
     teaching_assignments: list[TeachingAssignmentPublic]
     group_memberships: list[GroupMembershipPublic]
+
+
+# --- write payloads (POST/PATCH /admin/...) --------------------------------
+#
+# Create schemas list the required body; Update schemas are PARTIAL —
+# only the keys the client actually sends are applied (the router uses
+# model_dump(exclude_unset=True)), so entities can be patched field by
+# field.
+
+
+class FieldOfStudyCreate(pydantic.BaseModel):
+    """Body of POST /admin/fields."""
+
+    name: str = pydantic.Field(min_length=1)
+
+
+class FieldOfStudyUpdate(pydantic.BaseModel):
+    """Body of PATCH /admin/fields/{id} — rename only."""
+
+    name: str | None = pydantic.Field(default=None, min_length=1)
+
+
+class StudentGroupCreate(pydantic.BaseModel):
+    """Body of POST /admin/groups."""
+
+    name: str = pydantic.Field(min_length=1)
+    field_id: int
+
+
+class StudentGroupUpdate(pydantic.BaseModel):
+    """Body of PATCH /admin/groups/{id} — rename and/or move to another field."""
+
+    name: str | None = pydantic.Field(default=None, min_length=1)
+    field_id: int | None = None
+
+
+class SubjectCreate(pydantic.BaseModel):
+    """Body of POST /admin/subjects."""
+
+    name: str = pydantic.Field(min_length=1)
+    description: str | None = None
+
+
+class SubjectUpdate(pydantic.BaseModel):
+    """Body of PATCH /admin/subjects/{id}; explicit null clears the description."""
+
+    name: str | None = pydantic.Field(default=None, min_length=1)
+    description: str | None = None
+
+
+class TeachingAssignmentCreate(pydantic.BaseModel):
+    """Body of POST /admin/teaching-assignments."""
+
+    subject_id: int
+    teacher_id: int
+    group_id: int
+
+
+class TeachingAssignmentUpdate(pydantic.BaseModel):
+    """Body of PATCH /admin/teaching-assignments/{id} — any leg may change."""
+
+    subject_id: int | None = None
+    teacher_id: int | None = None
+    group_id: int | None = None
+
+
+class GroupMembershipCreate(pydantic.BaseModel):
+    """Body of POST /admin/group-memberships."""
+
+    student_id: int
+    group_id: int
+
+
+class GroupMembershipUpdate(pydantic.BaseModel):
+    """Body of PATCH /admin/group-memberships/{id} — student and/or group."""
+
+    student_id: int | None = None
+    group_id: int | None = None
