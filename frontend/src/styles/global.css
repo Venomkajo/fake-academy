@@ -108,6 +108,18 @@ a:hover {
   color: inherit;
 }
 
+/* destructive action: quiet outline until hovered, filled danger on hover */
+.btn-danger {
+  background: transparent;
+  color: var(--color-danger);
+  border-color: var(--color-border);
+}
+
+.btn-danger:hover {
+  background: var(--color-danger);
+  color: #fff;
+}
+
 /* --- app shell: Header + Navbar + <main> + Footer ------------------------ */
 
 .app-shell {

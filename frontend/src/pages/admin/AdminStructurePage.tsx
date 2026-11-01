@@ -14,6 +14,11 @@ import {
   createStudentGroup,
   createSubject,
   createTeachingAssignment,
+  deleteFieldOfStudy,
+  deleteGroupMembership,
+  deleteStudentGroup,
+  deleteSubject,
+  deleteTeachingAssignment,
   fetchAllUsers,
   fetchStructure,
   updateFieldOfStudy,
@@ -37,6 +42,7 @@ interface EntityConfig {
   rows: readonly Record<string, string | number | null>[]
   create: (values: FormValues) => Promise<unknown>
   update: (id: number, values: FormValues) => Promise<unknown>
+  remove: (id: number) => Promise<unknown>
 }
 
 export default function AdminStructurePage() {
@@ -87,6 +93,7 @@ export default function AdminStructurePage() {
       rows: structure?.fields ?? [],
       create: (v) => createFieldOfStudy({ name: v.name.trim() }),
       update: (id, v) => updateFieldOfStudy(id, { name: v.name.trim() }),
+      remove: deleteFieldOfStudy,
     },
     {
       key: 'groups',
@@ -98,6 +105,7 @@ export default function AdminStructurePage() {
       rows: structure?.groups ?? [],
       create: (v) => createStudentGroup({ name: v.name.trim(), field_id: Number(v.field_id) }),
       update: (id, v) => updateStudentGroup(id, { name: v.name.trim(), field_id: Number(v.field_id) }),
+      remove: deleteStudentGroup,
     },
     {
       key: 'subjects',
@@ -109,6 +117,7 @@ export default function AdminStructurePage() {
       rows: structure?.subjects ?? [],
       create: (v) => createSubject({ name: v.name.trim(), description: v.description || null }),
       update: (id, v) => updateSubject(id, { name: v.name.trim(), description: v.description || null }),
+      remove: deleteSubject,
     },
     {
       key: 'teaching_assignments',
@@ -131,6 +140,7 @@ export default function AdminStructurePage() {
           teacher_id: Number(v.teacher_id),
           group_id: Number(v.group_id),
         }),
+      remove: deleteTeachingAssignment,
     },
     {
       key: 'group_memberships',
@@ -143,6 +153,7 @@ export default function AdminStructurePage() {
       create: (v) => createGroupMembership({ student_id: Number(v.student_id), group_id: Number(v.group_id) }),
       update: (id, v) =>
         updateGroupMembership(id, { student_id: Number(v.student_id), group_id: Number(v.group_id) }),
+      remove: deleteGroupMembership,
     },
   ]
 
@@ -189,6 +200,7 @@ export default function AdminStructurePage() {
         cacheKey={['admin_structure']}
         create={active.create}
         update={active.update}
+        remove={active.remove}
       />
     </section>
   )

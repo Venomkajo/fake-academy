@@ -102,6 +102,11 @@ export async function updateFieldOfStudy(id: number, payload: FieldOfStudyPayloa
   return response.data
 }
 
+/** DELETE /admin/fields/{id} — delete a field of study. */
+export async function deleteFieldOfStudy(id: number): Promise<void> {
+  await api.delete(`/admin/fields/${id}`)
+}
+
 /** POST /admin/groups — create a student group in a field. */
 export async function createStudentGroup(payload: StudentGroupPayload): Promise<StudentGroup> {
   const response = await api.post<StudentGroup>('/admin/groups', payload)
@@ -112,6 +117,11 @@ export async function createStudentGroup(payload: StudentGroupPayload): Promise<
 export async function updateStudentGroup(id: number, payload: StudentGroupPayload): Promise<StudentGroup> {
   const response = await api.patch<StudentGroup>(`/admin/groups/${id}`, payload)
   return response.data
+}
+
+/** DELETE /admin/groups/{id} — delete a student group. */
+export async function deleteStudentGroup(id: number): Promise<void> {
+  await api.delete(`/admin/groups/${id}`)
 }
 
 /** POST /admin/subjects — create a subject. */
@@ -126,6 +136,11 @@ export async function updateSubject(id: number, payload: SubjectPayload): Promis
   return response.data
 }
 
+/** DELETE /admin/subjects/{id} — delete a subject. */
+export async function deleteSubject(id: number): Promise<void> {
+  await api.delete(`/admin/subjects/${id}`)
+}
+
 /** POST /admin/teaching-assignments — assign a teacher to subject + group. */
 export async function createTeachingAssignment(payload: TeachingAssignmentPayload): Promise<TeachingAssignment> {
   const response = await api.post<TeachingAssignment>('/admin/teaching-assignments', payload)
@@ -138,6 +153,11 @@ export async function updateTeachingAssignment(id: number, payload: TeachingAssi
   return response.data
 }
 
+/** DELETE /admin/teaching-assignments/{id} — delete a teaching assignment. */
+export async function deleteTeachingAssignment(id: number): Promise<void> {
+  await api.delete(`/admin/teaching-assignments/${id}`)
+}
+
 /** POST /admin/group-memberships — put a student into a group. */
 export async function createGroupMembership(payload: GroupMembershipPayload): Promise<GroupMembership> {
   const response = await api.post<GroupMembership>('/admin/group-memberships', payload)
@@ -148,4 +168,9 @@ export async function createGroupMembership(payload: GroupMembershipPayload): Pr
 export async function updateGroupMembership(id: number, payload: GroupMembershipPayload): Promise<GroupMembership> {
   const response = await api.patch<GroupMembership>(`/admin/group-memberships/${id}`, payload)
   return response.data
+}
+
+/** DELETE /admin/group-memberships/{id} — remove a student from a group. */
+export async function deleteGroupMembership(id: number): Promise<void> {
+  await api.delete(`/admin/group-memberships/${id}`)
 }

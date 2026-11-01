@@ -5,9 +5,10 @@
 // fields become inputs, 'ref' fields become selects over the given
 // options and display as the referenced entity's label. One form doubles
 // as "add" and "edit" (Edytuj loads a row into it); entities without a
-// create endpoint (users today) only show the form while editing. Saving
-// is a useMutation invalidating the given cache key, so tables refetch
-// after every save.
+// create endpoint (users today) only show the form while editing, and
+// rows get no Usuń button without a `remove` callback. Saving/deleting
+// are useMutations invalidating the given cache key, so tables refetch
+// after every change; delete asks for confirmation first.
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
@@ -36,6 +37,8 @@ interface Props {
   /** Create callback; when absent the form only appears in edit mode. */
   create?: (values: FormValues) => Promise<unknown>
   update: (id: number, values: FormValues) => Promise<unknown>
+  /** Delete callback; when absent the rows get no Usuń button. */
+  remove?: (id: number) => Promise<unknown>
 }
 
 /** Render one field's cell: refs as labels, nulls/empties as a dash. */
@@ -48,7 +51,7 @@ function displayValue(field: EntityFieldDef, row: Record<string, string | number
   return String(raw)
 }
 
-export default function EntitySection({ title, fields, rows, cacheKey, create, update }: Props) {
+export default function EntitySection({ title, fields, rows, cacheKey, create, update, remove }: Props) {
   const queryClient = useQueryClient()
 
   // One form for both modes: editingId === null means "add", otherwise the
@@ -69,6 +72,22 @@ export default function EntitySection({ title, fields, rows, cacheKey, create, u
       await queryClient.invalidateQueries({ queryKey: cacheKey })
       setValues({})
       setEditingId(null)
+      setError(null)
+    },
+    onError: (err) => setError(apiErrorMessage(err)),
+  })
+
+  const removeMutation = useMutation({
+    // Mirrors `create`: without a remove callback there is no Usuń button,
+    // so the mutation is unreachable — resolve instead of pretending.
+    mutationFn: (id: number) => (remove ? remove(id) : Promise.resolve()),
+    onSuccess: async (_result, deletedId) => {
+      await queryClient.invalidateQueries({ queryKey: cacheKey })
+      // The deleted row may be the one open in the edit form — close it.
+      if (editingId !== null && editingId === deletedId) {
+        setEditingId(null)
+        setValues({})
+      }
       setError(null)
     },
     onError: (err) => setError(apiErrorMessage(err)),
@@ -103,6 +122,16 @@ export default function EntitySection({ title, fields, rows, cacheKey, create, u
       return
     }
     saveMutation.mutate()
+  }
+
+  function handleDelete(row: Record<string, string | number | null>) {
+    // Native confirm(): no dialog library in the stack, and a blocking
+    // yes/no question is all this destructive action needs.
+    if (!window.confirm(`Czy na pewno usunąć wpis #${row.id}? Tej operacji nie można cofnąć.`)) {
+      return
+    }
+    setError(null)
+    removeMutation.mutate(Number(row.id))
   }
 
   const inputStyle = { display: 'block', width: '100%', padding: '0.5rem' } as const
@@ -204,6 +233,17 @@ export default function EntitySection({ title, fields, rows, cacheKey, create, u
                 <button type="button" className="btn btn-ghost" onClick={() => startEdit(row)}>
                   Edytuj
                 </button>
+                {remove && (
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    style={{ marginLeft: '0.5rem' }}
+                    disabled={removeMutation.isPending}
+                    onClick={() => handleDelete(row)}
+                  >
+                    Usuń
+                  </button>
+                )}
               </td>
             </tr>
           ))}

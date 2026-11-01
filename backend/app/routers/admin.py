@@ -1,9 +1,9 @@
 """Admin domain module: accounts and university structure, under /admin.
 
 Account management (/admin/users) plus the README A2 structure scope:
-GET /admin/structure displays everything, and one POST/PATCH pair per
-entity (fields, groups, subjects, teaching assignments, group
-memberships) edits it. Every route here is admin-only.
+GET /admin/structure displays everything, and one POST/PATCH/DELETE
+triple per entity (fields, groups, subjects, teaching assignments,
+group memberships) edits it. Every route here is admin-only.
 """
 
 import sqlalchemy as sa
@@ -141,8 +141,9 @@ def get_structure(
 
 # --- structure write endpoints (README A2) ---------------------------------
 #
-# One POST/PATCH pair per entity, mirroring GET /admin/structure above.
-# PATCH bodies are partial: only the keys the client sends are applied.
+# One POST/PATCH/DELETE triple per entity, mirroring GET /admin/structure
+# above. PATCH bodies are partial: only the sent keys are applied; a
+# DELETE that would orphan FK children ends in a 409 instead.
 
 
 @router.post("/fields", response_model=FieldOfStudyPublic, status_code=201)
@@ -173,6 +174,18 @@ def edit_field(
     _commit_or_conflict(db, "Kierunek o tej nazwie już istnieje")
     db.refresh(field)
     return field
+
+
+@router.delete("/fields/{field_id}", status_code=204)
+def delete_field(
+    field_id: int,
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> None:
+    """Delete a field of study. Admin-only."""
+    field = _get_or_404(db, FieldOfStudy, field_id, "kierunek")
+    db.delete(field)
+    _commit_or_conflict(db, "Nie można usunąć kierunku — istnieją powiązane grupy")
 
 
 @router.post("/groups", response_model=StudentGroupPublic, status_code=201)
@@ -209,6 +222,18 @@ def edit_group(
     return group
 
 
+@router.delete("/groups/{group_id}", status_code=204)
+def delete_group(
+    group_id: int,
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> None:
+    """Delete a student group. Admin-only."""
+    group = _get_or_404(db, StudentGroup, group_id, "grupa")
+    db.delete(group)
+    _commit_or_conflict(db, "Nie można usunąć grupy — ma przypisania lub członków")
+
+
 @router.post("/subjects", response_model=SubjectPublic, status_code=201)
 def create_subject(
     body: SubjectCreate,
@@ -237,6 +262,18 @@ def edit_subject(
     _commit_or_conflict(db, "Konflikt danych przedmiotu")
     db.refresh(subject)
     return subject
+
+
+@router.delete("/subjects/{subject_id}", status_code=204)
+def delete_subject(
+    subject_id: int,
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> None:
+    """Delete a subject. Admin-only."""
+    subject = _get_or_404(db, Subject, subject_id, "przedmiot")
+    db.delete(subject)
+    _commit_or_conflict(db, "Nie można usunąć przedmiotu — ma materiały lub przypisania")
 
 
 @router.post(
@@ -285,6 +322,20 @@ def edit_teaching_assignment(
     return assignment
 
 
+@router.delete("/teaching-assignments/{assignment_id}", status_code=204)
+def delete_teaching_assignment(
+    assignment_id: int,
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> None:
+    """Delete a teaching assignment. Admin-only."""
+    assignment = _get_or_404(db, TeachingAssignment, assignment_id, "przypisanie")
+    db.delete(assignment)
+    _commit_or_conflict(
+        db, "Nie można usunąć przypisania — mają do niego zajęcia lub kategorie ocen"
+    )
+
+
 @router.post("/group-memberships", response_model=GroupMembershipPublic, status_code=201)
 def create_group_membership(
     body: GroupMembershipCreate,
@@ -319,6 +370,18 @@ def edit_group_membership(
     _commit_or_conflict(db, "Student należy już do tej grupy")
     db.refresh(membership)
     return membership
+
+
+@router.delete("/group-memberships/{membership_id}", status_code=204)
+def delete_group_membership(
+    membership_id: int,
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> None:
+    """Remove a student from a group. Admin-only."""
+    membership = _get_or_404(db, GroupMembership, membership_id, "członkostwo")
+    db.delete(membership)
+    _commit_or_conflict(db, "Nie można usunąć członkostwa")
 
 
 @router.get("/schedule")
