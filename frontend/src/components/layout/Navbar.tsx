@@ -24,6 +24,7 @@ interface NavItem {
 // messages of their own, so those links stay hidden.
 const LINKS: readonly NavItem[] = [
   { to: '/', label: 'Pulpit' },
+  { to: '/groups', label: 'Grupy', roles: ['student', 'teacher'] },
   { to: '/grades', label: 'Oceny', roles: ['student', 'teacher'] },
   { to: '/schedule', label: 'Plan zajęć', roles: ['student', 'teacher'] },
   { to: '/messages', label: 'Wiadomości', roles: ['student', 'teacher'] },

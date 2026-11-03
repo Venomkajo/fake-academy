@@ -6,8 +6,8 @@
 //
 // The logged-in user is CACHED SERVER STATE (TanStack Query, key
 // ['me']): the boot fetch is the query's initial load, login writes
-// the fresh user into that cache, logout clears the whole cache —
-// there is no duplicate user state in useState to keep in sync.
+// the fresh user into that cache, logout clears the whole cache and
+// forces a full page load back to "/".
 //
 // After login the URL decides what renders inside the shared Layout.
 // <Routes> is only reachable when `user` is set, so every route below
@@ -23,6 +23,8 @@ import { clearToken, fetchCurrentUser, hasToken, type UserPublic } from './api/a
 
 import Layout from './components/layout/Layout'
 import DashboardPage from './pages/DashboardPage'
+import GradesPage from './pages/GradesPage'
+import GroupsPage from './pages/GroupsPage'
 import LoginPage from './pages/LoginPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import AdminStructurePage from './pages/admin/AdminStructurePage'
@@ -74,6 +76,7 @@ export default function App() {
   function handleLogout() {
     clearToken()
     queryClient.clear()
+    window.location.assign('/')
   }
 
   return (
@@ -84,9 +87,10 @@ export default function App() {
         {/* index = the "/" route (no path of its own) */}
         <Route index element={<DashboardPage user={user} />} />
 
-        {/* Placeholder screens — replaced with real pages one by one.
-            URL paths are English/ASCII; page titles stay Polish. */}
-        <Route path="grades" element={<PlaceholderPage title="Oceny" />} />
+        {/* Real pages — one role-aware component per area; URL paths stay
+            English/ASCII, page titles stay Polish (see Navbar for the links). */}
+        <Route path="grades" element={<GradesPage role={user.role} />} />
+        <Route path="groups" element={<GroupsPage role={user.role} />} />
         <Route path="schedule" element={<PlaceholderPage title="Plan zajęć" />} />
         <Route path="messages" element={<PlaceholderPage title="Wiadomości" />} />
         <Route path="materials" element={<PlaceholderPage title="Materiały" />} />

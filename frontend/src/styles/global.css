@@ -120,6 +120,52 @@ a:hover {
   color: #fff;
 }
 
+/* --- data tables --------------------------------------------------------- */
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+}
+
+.data-table th,
+.data-table td {
+  border: 1px solid var(--color-border);
+  padding: 0.45rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table thead th {
+  background: var(--color-bg);
+  font-weight: 600;
+}
+
+/* numeric columns (grades, weights, counts) line up on the decimal point */
+.data-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- grade editor (teacher gradebook cells) ------------------------------ */
+
+/* one inline-editable cell of the teacher's gradebook grid */
+.grade-input {
+  width: 5.5rem;
+  padding: 0.3rem 0.5rem;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.grade-input:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+}
+
 /* --- app shell: Header + Navbar + <main> + Footer ------------------------ */
 
 .app-shell {

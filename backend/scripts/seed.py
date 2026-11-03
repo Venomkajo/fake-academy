@@ -1,15 +1,17 @@
-"""Seed the database with development users and a fake university structure.
+"""Seed the database with dev users, university structure and sample grades.
 
 Idempotent: every entity is matched by its natural key (user email,
-field/subject name, (field, group) pair, assignment/membership FK set)
-and existing rows are skipped, so it is safe to run again at any time.
+field/subject name, (field, group) pair, assignment/membership FK set,
+(assignment, category name) pair, (student, category) pair) and existing
+rows are skipped, so it is safe to run again at any time.
 
 The structure half covers README card A2 (Struktura uczelni): fields of
 study own student groups, subjects stand alone, teaching assignments tie
 a teacher to a subject for a group, and memberships tie students to
-groups. Rows reference each other by NAME/email and the script resolves
-ids at runtime, so the seed never depends on serial values that differ
-between machines.
+groups. On top of that, grade categories and a handful of sample grades
+cover the early student/teacher views (README S1/W1/W2). Rows reference
+each other by NAME/email and the script resolves ids at runtime, so the
+seed never depends on serial values that differ between machines.
 
 Note: importing app.security (indirectly) requires JWT_SECRET to be
 set — app/config.py fails fast without it — even though seeding only
@@ -27,11 +29,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 # Console encoding fix so Polish names print correctly on Windows.
 sys.stdout.reconfigure(encoding="utf-8")
 
+import decimal  # noqa: E402 — stdlib, grouped with the app imports below
+
 import sqlalchemy as sa  # noqa: E402 — must come AFTER the sys.path tweak
 from sqlalchemy.orm import Session  # noqa: E402
 
 from app.database import SessionLocal  # noqa: E402
 from app.models.field_of_study import FieldOfStudy  # noqa: E402
+from app.models.grade import Grade  # noqa: E402
+from app.models.grade_category import GradeCategory  # noqa: E402
 from app.models.group_membership import GroupMembership  # noqa: E402
 from app.models.student_group import StudentGroup  # noqa: E402
 from app.models.subject import Subject  # noqa: E402
@@ -106,6 +112,34 @@ SEED_GROUP_MEMBERSHIPS = [
     ("ewa@fake.academy", "Mathematics", "MATH-2026-A"),
 ]
 
+# (teacher_email, subject_name, field_name, group_name, category_name, weight):
+# grading buckets of each assignment. Weights are percentages; they sum to
+# 100 per assignment where a full breakdown exists.
+SEED_GRADE_CATEGORIES = [
+    ("anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", "Egzamin", 60),
+    ("anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", "Kolokwium", 25),
+    ("anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", "Aktywność", 15),
+    ("anna@fake.academy", "Databases", "Computer Science", "CS-2026-A", "Projekt", 50),
+    ("anna@fake.academy", "Databases", "Computer Science", "CS-2026-A", "Egzamin", 50),
+    ("piotr@fake.academy", "Calculus", "Mathematics", "MATH-2026-A", "Egzamin", 100),
+    ("piotr@fake.academy", "Linear Algebra", "Mathematics", "MATH-2026-A", "Kolokwium", 40),
+    ("piotr@fake.academy", "Linear Algebra", "Mathematics", "MATH-2026-A", "Egzamin", 60),
+]
+
+# (student_email, teacher_email, subject_name, field_name, group_name,
+#  category_name, value, symbol) — sample grades for the early views.
+# value XOR symbol per the grades check constraint; "ZAL" demonstrates the
+# pass/fail path (Databases Projekt).
+SEED_GRADES = [
+    ("kasia@fake.academy", "anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", "Egzamin", "4.5", None),
+    ("kasia@fake.academy", "anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", "Kolokwium", "4.0", None),
+    ("kasia@fake.academy", "anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", "Aktywność", "5.0", None),
+    ("marek@fake.academy", "anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", "Egzamin", "3.0", None),
+    ("marek@fake.academy", "anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", "Kolokwium", "3.5", None),
+    ("kasia@fake.academy", "anna@fake.academy", "Databases", "Computer Science", "CS-2026-A", "Projekt", None, "ZAL"),
+    ("ewa@fake.academy", "piotr@fake.academy", "Calculus", "Mathematics", "MATH-2026-A", "Egzamin", "4.0", None),
+]
+
 
 def _field_by_name(db: Session, name: str) -> FieldOfStudy:
     """Resolve a seed-referenced field of study; fail loudly if missing."""
@@ -145,6 +179,46 @@ def _group_by_name(db: Session, field_name: str, group_name: str) -> StudentGrou
             " but it does not exist"
         )
     return group
+
+
+def _assignment_by_key(
+    db: Session, teacher_email: str, subject_name: str, field_name: str, group_name: str
+) -> TeachingAssignment:
+    """Resolve a seed-referenced teaching assignment; fail loudly if missing."""
+    teacher = _user_by_email(db, teacher_email)
+    subject = _subject_by_name(db, subject_name)
+    group = _group_by_name(db, field_name, group_name)
+    assignment = db.scalar(
+        sa.select(TeachingAssignment).where(
+            TeachingAssignment.subject_id == subject.id,
+            TeachingAssignment.teacher_id == teacher.id,
+            TeachingAssignment.group_id == group.id,
+        )
+    )
+    if assignment is None:
+        raise SystemExit(
+            f"seed references assignment {teacher_email} / {subject_name} /"
+            f" {group_name}, but it does not exist"
+        )
+    return assignment
+
+
+def _category_by_name(
+    db: Session, assignment: TeachingAssignment, category_name: str
+) -> GradeCategory:
+    """Resolve a seed-referenced grade category; fail loudly if missing."""
+    category = db.scalar(
+        sa.select(GradeCategory).where(
+            GradeCategory.assignment_id == assignment.id,
+            GradeCategory.name == category_name,
+        )
+    )
+    if category is None:
+        raise SystemExit(
+            f"seed references category {category_name!r} of assignment"
+            f" {assignment.id}, but it does not exist"
+        )
+    return category
 
 
 
@@ -284,6 +358,75 @@ def seed_group_memberships(db: Session) -> int:
     return inserted
 
 
+def seed_grade_categories(db: Session) -> int:
+    """Insert missing grade categories; return how many were added."""
+    inserted = 0
+    print("Seeding grade categories:")
+    for teacher_email, subject_name, field_name, group_name, name, weight in SEED_GRADE_CATEGORIES:
+        assignment = _assignment_by_key(db, teacher_email, subject_name, field_name, group_name)
+        exists = db.scalar(
+            sa.select(GradeCategory).where(
+                GradeCategory.assignment_id == assignment.id,
+                GradeCategory.name == name,
+            )
+        )
+        if exists is not None:
+            print(f"  skip (already exists): {group_name:<12} {subject_name} / {name}")
+            continue
+
+        db.add(
+            GradeCategory(
+                assignment_id=assignment.id,
+                name=name,
+                weight=decimal.Decimal(weight),
+            )
+        )
+        inserted += 1
+        print(f"  add: {group_name:<12} {subject_name:<34} {name} ({weight}%)")
+    return inserted
+
+
+def seed_grades(db: Session) -> int:
+    """Insert missing sample grades; return how many were added."""
+    inserted = 0
+    print("Seeding grades:")
+    for (
+        student_email,
+        teacher_email,
+        subject_name,
+        field_name,
+        group_name,
+        category_name,
+        value,
+        symbol,
+    ) in SEED_GRADES:
+        student = _user_by_email(db, student_email)
+        assignment = _assignment_by_key(db, teacher_email, subject_name, field_name, group_name)
+        category = _category_by_name(db, assignment, category_name)
+        exists = db.scalar(
+            sa.select(Grade).where(
+                Grade.student_id == student.id,
+                Grade.category_id == category.id,
+            )
+        )
+        if exists is not None:
+            print(f"  skip (already exists): {student_email} / {subject_name} / {category_name}")
+            continue
+
+        db.add(
+            Grade(
+                student_id=student.id,
+                category_id=category.id,
+                value=decimal.Decimal(value) if value is not None else None,
+                symbol=symbol,
+            )
+        )
+        inserted += 1
+        outcome = symbol if symbol is not None else value
+        print(f"  add: {student_email:<22} {subject_name:<34} {category_name} = {outcome}")
+    return inserted
+
+
 def main() -> None:
     """Seed everything that is missing: users first, then the structure referencing them."""
     db = SessionLocal()
@@ -304,6 +447,10 @@ def main() -> None:
         inserted += seed_teaching_assignments(db)
         db.flush()
         inserted += seed_group_memberships(db)
+        db.flush()
+        inserted += seed_grade_categories(db)
+        db.flush()
+        inserted += seed_grades(db)
 
         # One commit at the end: either all inserts succeed or none.
         db.commit()
@@ -315,6 +462,8 @@ def main() -> None:
             + len(SEED_SUBJECTS)
             + len(SEED_TEACHING_ASSIGNMENTS)
             + len(SEED_GROUP_MEMBERSHIPS)
+            + len(SEED_GRADE_CATEGORIES)
+            + len(SEED_GRADES)
         )
         print(f"Done: {inserted} inserted, {expected - inserted} skipped.")
     finally:
