@@ -26,6 +26,23 @@ Fake Academy rozwiązuje trzy problemy:
   technologii, w pełni skonteneryzowana i gotowa do wdrożenia
   w chmurze.
 
+## Szybki start (Windows)
+
+Najprostsza droga do działającego środowiska to `start.bat` w katalogu
+głównym repozytorium:
+
+```bat
+start.bat          :: build + start + migracje + seed (bezpieczne przy powtórce)
+start.bat reset    :: pełny reset: kontenery, wolumeny, obrazy, cache — i świeży start
+```
+
+Skrypt sprawdza Dockera, w razie potrzeby tworzy `.env` oraz `frontend/.env`
+z deweloperskimi wartościami domyślnymi, buduje obrazy, uruchamia wszystkie
+kontenery, wykonuje migracje Alembic (`alembic upgrade head`) i zasilanie
+bazy (`backend/scripts/seed.py`). Po zakończeniu wypisuje adresy usług
+i konta testowe (`admin@fake.academy` / `admin123!` itd. — pełna lista
+w `backend/scripts/seed.py`).
+
 ## Stack technologiczny
 
 | Warstwa | Technologia |
