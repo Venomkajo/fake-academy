@@ -29,6 +29,7 @@ import LoginPage from './pages/LoginPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import SchedulePage from './pages/SchedulePage'
 import AdminSchedulePage from './pages/admin/AdminSchedulePage'
+import AdminStatisticsPage from './pages/admin/AdminStatisticsPage'
 import AdminStructurePage from './pages/admin/AdminStructurePage'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
 
@@ -100,7 +101,7 @@ export default function App() {
         <Route path="admin/users" element={<AdminUsersPage />} />
         <Route path="admin/structure" element={<AdminStructurePage />} />
         <Route path="admin/schedule" element={<AdminSchedulePage />} />
-        <Route path="admin/statistics" element={<PlaceholderPage title="Statystyki systemowe" />} />
+        <Route path="admin/statistics" element={<AdminStatisticsPage />} />
 
         {/* Nothing matched the URL -> 404 instead of a blank page. */}
         <Route path="*" element={<PlaceholderPage title="404 — nie znaleziono strony" />} />

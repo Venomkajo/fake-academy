@@ -16,8 +16,12 @@ from app.database import get_db
 from app.deps import require_roles
 
 from app.models.field_of_study import FieldOfStudy
+from app.models.feedback import Feedback
+from app.models.grade import Grade
 from app.models.group_membership import GroupMembership
 from app.models.lesson_slot import LessonSlot
+from app.models.material import Material
+from app.models.message import Message
 from app.models.student_group import StudentGroup
 from app.models.subject import Subject
 from app.models.teaching_assignment import TeachingAssignment
@@ -29,6 +33,7 @@ from app.schemas.schedule import (
     LessonSlotOut,
     LessonSlotUpdate,
 )
+from app.schemas.stats import RoleCount, StatsResponse
 from app.schemas.structure import (
     FieldOfStudyCreate,
     FieldOfStudyPublic,
@@ -550,12 +555,51 @@ def delete_lesson_slot(
     db.delete(slot)
     _commit_or_conflict(db, "Nie można usunąć zajęć")
 
-@router.get("/statistics")
-def get_statistics():
-    """Get statistics of the application. Admin-only."""
-    # This is a placeholder for the actual implementation.
-    # You would typically query the database for the statistics information.
-    return []
+@router.get("/stats", response_model=StatsResponse)
+def get_statistics(
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> StatsResponse:
+    """Return platform-wide usage counters (README A4). Admin-only."""
+    # Accounts: one grouped query returns per-role total + active counts —
+    # SUM over a CASE marks active rows as 1, deactivated as 0.
+    role_rows = db.execute(
+        sa.select(
+            User.role,
+            sa.func.count(User.id),
+            sa.func.sum(sa.case((User.is_active, 1), else_=0)),
+        ).group_by(User.role)
+    ).all()
+    by_role = {
+        role.value: RoleCount(
+            role=role.value, total=total, active=int(active or 0)
+        )
+        for role, total, active in role_rows
+    }
+    # All three roles stay present even when one has zero accounts, so the
+    # dashboard's chart never needs to handle a missing row.
+    for role in UserRole:
+        by_role.setdefault(role.value, RoleCount(role=role.value, total=0, active=0))
+
+    def _count_rows(model: type) -> int:
+        """Count every row of one table with a single aggregate."""
+        return db.scalar(sa.select(sa.func.count(model.id)))
+
+    return StatsResponse(
+        users_total=sum(item.total for item in by_role.values()),
+        users_active=sum(item.active for item in by_role.values()),
+        users_by_role=[by_role[role.value] for role in UserRole],
+        grades=_count_rows(Grade),
+        messages=_count_rows(Message),
+        feedback=_count_rows(Feedback),
+        materials=_count_rows(Material),
+        lesson_slots=_count_rows(LessonSlot),
+        fields_of_study=_count_rows(FieldOfStudy),
+        student_groups=_count_rows(StudentGroup),
+        subjects=_count_rows(Subject),
+        teaching_assignments=_count_rows(TeachingAssignment),
+        group_memberships=_count_rows(GroupMembership),
+    )
 
 @router.get("/users/{user_id}", response_model=UserPublic)
 def get_user(

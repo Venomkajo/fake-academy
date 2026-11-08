@@ -353,6 +353,84 @@ a:hover {
   grid-column: span 2;
 }
 
+/* --- admin statistics dashboard ------------------------------------------- */
+
+/* responsive card grid: fills the row, cards never narrower than ~10rem */
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin: 0.75rem 0 1.5rem;
+}
+
+.stats-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.25rem;
+}
+
+.stats-card .stats-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.stats-card .stats-label {
+  font-size: 0.85rem;
+}
+
+.stats-card .stats-hint {
+  font-size: 0.78rem;
+}
+
+/* one row of the accounts-per-role chart: label | bar | value */
+.stats-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0.75rem 0 1.5rem;
+}
+
+.stats-bar-row {
+  display: grid;
+  grid-template-columns: 9rem 1fr 6rem;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.stats-bar-track {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  height: 1.1rem;
+  overflow: hidden;
+}
+
+.stats-bar-fill {
+  display: flex;
+  height: 100%;
+}
+
+/* active accounts in the brand color, deactivated in a muted tint */
+.stats-bar-fill .is-active {
+  background: var(--color-primary);
+}
+
+.stats-bar-fill .is-inactive {
+  background: #b8c6d9;
+}
+
+.stats-bar-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+
 
 /* --- app shell: Header + Navbar + <main> + Footer ------------------------ */
 

@@ -1,5 +1,5 @@
 import { api } from './client'
-import { UserPublic } from './auth'
+import { type Role, UserPublic } from './auth'
 
 /** GET /admin/users — fetches all users. */
 export async function fetchAllUsers(): Promise<UserPublic[]> {
@@ -173,4 +173,36 @@ export async function updateGroupMembership(id: number, payload: GroupMembership
 /** DELETE /admin/group-memberships/{id} — remove a student from a group. */
 export async function deleteGroupMembership(id: number): Promise<void> {
   await api.delete(`/admin/group-memberships/${id}`)
+}
+
+// --- statistics (README A4) ---------------------------------------------------
+
+/** Accounts holding one role, split into active and deactivated. */
+export interface RoleCount {
+  role: Role
+  total: number
+  active: number
+}
+
+/** Payload of GET /admin/stats: platform-wide usage counters in one shot. */
+export interface AdminStats {
+  users_total: number
+  users_active: number
+  users_by_role: RoleCount[]
+  grades: number
+  messages: number
+  feedback: number
+  materials: number
+  lesson_slots: number
+  fields_of_study: number
+  student_groups: number
+  subjects: number
+  teaching_assignments: number
+  group_memberships: number
+}
+
+/** GET /admin/stats — platform-wide usage counters for the admin dashboard. */
+export async function fetchAdminStats(): Promise<AdminStats> {
+  const response = await api.get<AdminStats>('/admin/stats')
+  return response.data
 }
