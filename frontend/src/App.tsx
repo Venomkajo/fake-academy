@@ -26,6 +26,7 @@ import DashboardPage from './pages/DashboardPage'
 import GradesPage from './pages/GradesPage'
 import GroupsPage from './pages/GroupsPage'
 import LoginPage from './pages/LoginPage'
+import MessagesPage from './pages/MessagesPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import SchedulePage from './pages/SchedulePage'
 import AdminSchedulePage from './pages/admin/AdminSchedulePage'
@@ -95,7 +96,7 @@ export default function App() {
         <Route path="grades" element={<GradesPage role={user.role} />} />
         <Route path="groups" element={<GroupsPage role={user.role} />} />
         <Route path="schedule" element={<SchedulePage role={user.role} />} />
-        <Route path="messages" element={<PlaceholderPage title="Wiadomości" />} />
+        <Route path="messages" element={<MessagesPage user={user} />} />
         <Route path="materials" element={<PlaceholderPage title="Materiały" />} />
 
         <Route path="admin/users" element={<AdminUsersPage />} />

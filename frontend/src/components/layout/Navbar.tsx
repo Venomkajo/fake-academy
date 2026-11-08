@@ -4,9 +4,16 @@
 // adds the .active class automatically, so the open page is highlighted
 // with zero JavaScript on our side. Navigation is client-side: no full
 // page reload.
+//
+// One exception to "presentational": the "Wiadomości" link carries the
+// unread counter (README S3). It is a ['messages', 'unread-count'] query
+// so every invalidation of ['messages'] (opening a thread, replying,
+// composing) refetches it together with the message lists.
 import { NavLink } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 
 import type { Role, UserPublic } from '../../api/auth'
+import { fetchUnreadCount } from '../../api/messages'
 
 /** One bar entry; `roles` restricts who sees it (omit = everyone). */
 interface NavItem {
@@ -35,8 +42,6 @@ const LINKS: readonly NavItem[] = [
   { to: '/admin/statistics', label: 'Statystyki', roles: ['admin'] },
 ]
 
-// Presentational like Header: ALL data arrives via props (`user`) — it
-// owns no state and calls no API itself, it just filters LINKS by role.
 interface Props {
   user: UserPublic
 }
@@ -46,12 +51,26 @@ export default function Navbar({ user }: Props) {
   // logged-in user's role must be listed to see it.
   const links = LINKS.filter((l) => !l.roles || l.roles.includes(user.role))
 
+  // Unread badge for the "Wiadomości" link; disabled for roles without
+  // a mailbox (admins never see the link anyway).
+  const unreadQuery = useQuery({
+    queryKey: ['messages', 'unread-count'],
+    queryFn: fetchUnreadCount,
+    enabled: user.role === 'student' || user.role === 'teacher',
+  })
+  const unread = unreadQuery.data ?? 0
+
   return (
     <nav className="app-nav" aria-label="Nawigacja główna">
       <div className="container nav-inner">
         {links.map(({ to, label }) => (
           <NavLink key={to} to={to} end={to === '/'} className="nav-link">
             {label}
+            {to === '/messages' && unread > 0 && (
+              <span className="nav-unread" title={`${unread} nieprzeczytanych`}>
+                {unread}
+              </span>
+            )}
           </NavLink>
         ))}
       </div>

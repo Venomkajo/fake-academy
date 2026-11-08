@@ -39,8 +39,9 @@ class Message(Base):
     group_id: Mapped[int | None] = mapped_column(
         sa.Integer, sa.ForeignKey("student_groups.id"), index=True
     )
-    # Short subject line shown in inbox listings.
-    title: Mapped[str] = mapped_column(sa.String(255))
+    # Short subject line — required for announcements, kept NULL by private
+    # chat messages (a chat reply needs no title).
+    title: Mapped[str | None] = mapped_column(sa.String(255))
     # Full message body.
     content: Mapped[str] = mapped_column(sa.Text)
     # Filled in by the database on insert.

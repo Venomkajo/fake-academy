@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import CORS_ORIGINS
 from app.database import get_db
-from app.routers import auth, admin, grades, groups, schedule
+from app.routers import auth, admin, grades, groups, messages, schedule
 
 app = FastAPI(title="Fake Academy API")
 
@@ -30,6 +30,7 @@ app.include_router(admin.router)
 app.include_router(grades.router)
 app.include_router(groups.router)
 app.include_router(schedule.router)
+app.include_router(messages.router)
 
 @app.get("/health")
 def health():

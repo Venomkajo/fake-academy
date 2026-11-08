@@ -43,6 +43,8 @@ from app.models.grade import Grade  # noqa: E402
 from app.models.grade_category import GradeCategory  # noqa: E402
 from app.models.group_membership import GroupMembership  # noqa: E402
 from app.models.lesson_slot import LessonSlot  # noqa: E402
+from app.models.message import Message  # noqa: E402
+from app.models.message_read_status import MessageReadStatus  # noqa: E402
 from app.models.student_group import StudentGroup  # noqa: E402
 from app.models.subject import Subject  # noqa: E402
 from app.models.teaching_assignment import TeachingAssignment  # noqa: E402
@@ -134,9 +136,53 @@ SEED_LESSON_SLOTS = [
     ("piotr@fake.academy", "Linear Algebra", "Mathematics", "MATH-2026-A", 4, "13:00", "14:30", "C-1.10"),
 ]
 
-# (teacher_email, subject_name, field_name, group_name, category_name, weight):
+# (sender_email, recipient_email | (field_name, group_name), title | None, content,
+#  minutes_ago): a private chat between a student and a teacher (no title —
+# chat needs none) plus two group announcements (titled). Sample data for
+# the messages views (README S3/W4). Recipient is either a person (string)
+# or a group (pair); minutes_ago staggers created_at so the reply ALWAYS
+# follows the question chronologically (Postgres now() is the transaction
+# start, so unstamped rows would all share one timestamp).
+SEED_MESSAGES = [
+    (
+        "kasia@fake.academy",
+        "anna@fake.academy",
+        None,
+        "Dzień dobry,\n\nczy projektu z baz danych można oddawać w parach?",
+        2900,
+    ),
+    (
+        "anna@fake.academy",
+        "kasia@fake.academy",
+        None,
+        "Dzień dobry,\n\ntak, projekty można oddawać w parach — tylko proszę zaznaczyć to w raporcie.",
+        2880,
+    ),
+    (
+        "anna@fake.academy",
+        ("Computer Science", "CS-2026-A"),
+        "Zmiana terminu konsultacji",
+        "Dzień dobry,\n\nkonsultacje w ten czwartek odbędą się o 16:00 zamiast 15:00.\n\nPozdrawiam,\nAnna Kowalska",
+        1440,
+    ),
+    (
+        "piotr@fake.academy",
+        ("Mathematics", "MATH-2026-A"),
+        "Kolokwium z algebry liniowej",
+        "Dzień dobry,\n\nkolokwium z algebry liniowej odbędzie się na zajęciach w przyszły wtorek. Obowiązuje materiał z wykładów 1–5.",
+        90,
+    ),
+]
+
+# (reader_email, message_index) — read receipts so the unread counters and
+# the read/unread state have something realistic to show: kasia has read the
+# first message of her thread, nothing else.
+SEED_MESSAGE_READS = [
+    ("kasia@fake.academy", 0),
+]
 # grading buckets of each assignment. Weights are percentages; they sum to
 # 100 per assignment where a full breakdown exists.
+# (teacher_email, subject_name, field_name, group_name, category_name, weight):
 SEED_GRADE_CATEGORIES = [
     ("anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", "Egzamin", 60),
     ("anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", "Kolokwium", 25),
@@ -421,6 +467,85 @@ def seed_lesson_slots(db: Session) -> int:
     return inserted
 
 
+def seed_messages(db: Session) -> list[int]:
+    """Insert missing messages; return the seeded message ids in list order."""
+    ids: list[int] = []
+    print("Seeding messages:")
+    for sender_email, recipient, title, content, minutes_ago in SEED_MESSAGES:
+        sender = _user_by_email(db, sender_email)
+        # Recipient: a person (email string) or a group ((field, name) pair).
+        if isinstance(recipient, str):
+            recipient_user = _user_by_email(db, recipient)
+            recipient_id = recipient_user.id
+            group_id = None
+        else:
+            field_name, group_name = recipient
+            group = _group_by_name(db, field_name, group_name)
+            recipient_id = None
+            group_id = group.id
+        exists = db.scalar(
+            sa.select(Message).where(
+                Message.sender_id == sender.id,
+                Message.recipient_id == recipient_id,
+                Message.group_id == group_id,
+                # title is None for chat messages — compare with IS NULL.
+                Message.title.is_(None) if title is None else Message.title == title,
+            )
+        )
+        if exists is not None:
+            print(f"  skip (already exists): {title or content.splitlines()[0]}")
+            ids.append(exists.id)
+            continue
+
+        message = Message(
+            sender_id=sender.id,
+            recipient_id=recipient_id,
+            group_id=group_id,
+            title=title,
+            content=content,
+            # Explicit timestamp: now() would give the whole seed run ONE
+            # shared created_at (transaction start), putting the reply
+            # before the question once ids tie-break the sort.
+            created_at=datetime.datetime.now(datetime.timezone.utc)
+            - datetime.timedelta(minutes=minutes_ago),
+        )
+        db.add(message)
+        db.flush()  # make the fresh id visible for the receipt step
+        ids.append(message.id)
+        target = recipient if isinstance(recipient, str) else f"{recipient[1]} (group)"
+        print(f"  add: {sender_email} -> {target}: {title or content.splitlines()[0]}")
+    return ids
+
+
+def seed_message_reads(db: Session, message_ids: list[int]) -> int:
+    """Insert missing read receipts; return how many were added."""
+    inserted = 0
+    print("Seeding message read receipts:")
+    for reader_email, index in SEED_MESSAGE_READS:
+        reader = _user_by_email(db, reader_email)
+        message_id = message_ids[index]
+        exists = db.scalar(
+            sa.select(MessageReadStatus).where(
+                MessageReadStatus.message_id == message_id,
+                MessageReadStatus.user_id == reader.id,
+            )
+        )
+        if exists is not None:
+            print(f"  skip (already exists): {reader_email} / message {message_id}")
+            continue
+
+        db.add(
+            MessageReadStatus(
+                message_id=message_id,
+                user_id=reader.id,
+                read_at=datetime.datetime.now(datetime.timezone.utc),
+            )
+        )
+        inserted += 1
+        print(f"  add: {reader_email} read message {message_id}")
+    return inserted
+
+
 def seed_grade_categories(db: Session) -> int:
     """Insert missing grade categories; return how many were added."""
     inserted = 0
@@ -516,6 +641,10 @@ def main() -> None:
         inserted += seed_grade_categories(db)
         db.flush()
         inserted += seed_grades(db)
+        db.flush()
+        message_ids = seed_messages(db)
+        db.flush()
+        inserted += seed_message_reads(db, message_ids)
 
         # One commit at the end: either all inserts succeed or none.
         db.commit()
@@ -530,6 +659,7 @@ def main() -> None:
             + len(SEED_LESSON_SLOTS)
             + len(SEED_GRADE_CATEGORIES)
             + len(SEED_GRADES)
+            + len(SEED_MESSAGES)
         )
         print(f"Done: {inserted} inserted, {expected - inserted} skipped.")
     finally:
