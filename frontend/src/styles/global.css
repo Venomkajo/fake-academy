@@ -166,6 +166,194 @@ a:hover {
   outline-offset: -1px;
 }
 
+/* --- schedule week grid --------------------------------------------------- */
+
+/* the whole grid: header row + scroll-free body (height set inline) */
+.schedule {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.schedule-head {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+/* empty top-left cell above the hour ruler */
+.schedule-corner {
+  flex: none;
+  width: 3.25rem;
+}
+
+.schedule-day-head {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0.25rem;
+  text-align: center;
+  font-size: 0.85rem;
+  border-left: 1px solid var(--color-border);
+}
+
+.schedule-day-head .schedule-day-label {
+  display: block;
+}
+
+.schedule-day-head .muted {
+  font-size: 0.72rem;
+}
+
+/* the current day's column header stands out */
+.schedule-day-head.is-today {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.schedule-body {
+  display: flex;
+  position: relative;
+}
+
+/* hour labels; positions (top: %) are set inline per hour */
+.schedule-ruler {
+  flex: none;
+  width: 3.25rem;
+  position: relative;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-ruler-mark {
+  position: absolute;
+  right: 0.4rem;
+  transform: translateY(-50%);
+}
+
+/* one day column: hourly guide lines via a repeating gradient
+   (14 = the grid's hour span, 7:00–21:00 — keep in sync with WeekGrid.tsx) */
+.schedule-day {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  border-left: 1px solid var(--color-border);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--color-border) 0,
+    var(--color-border) 1px,
+    transparent 1px,
+    transparent calc(100% / 14)
+  );
+}
+
+/* admin mode: the empty column area opens the add form on click */
+.schedule-day.is-clickable {
+  cursor: copy;
+}
+
+/* one lesson tile; top/height/left/width are computed inline from its times */
+.schedule-slot {
+  position: absolute;
+  border: 0;
+  border-left: 3px solid var(--color-primary);
+  border-radius: 6px;
+  padding: 0.15rem 0.35rem;
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+  line-height: 1.25;
+}
+
+.schedule-slot.is-clickable {
+  cursor: pointer;
+}
+
+.schedule-slot .schedule-slot-subject {
+  display: block;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.schedule-slot .schedule-slot-time,
+.schedule-slot .schedule-slot-room,
+.schedule-slot .schedule-slot-foot {
+  display: block;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* pastel tile palette, picked per subject name so a subject keeps its color */
+.schedule-slot.tile-0 {
+  background: #e8f0fb;
+  border-left-color: #274c77;
+}
+
+.schedule-slot.tile-1 {
+  background: #e6f4ea;
+  border-left-color: #2e7d4f;
+}
+
+.schedule-slot.tile-2 {
+  background: #fdf3e0;
+  border-left-color: #b57d1e;
+}
+
+.schedule-slot.tile-3 {
+  background: #f3ebf9;
+  border-left-color: #6b46a8;
+}
+
+.schedule-slot.tile-4 {
+  background: #fdecec;
+  border-left-color: #b3261e;
+}
+
+.schedule-slot.tile-5 {
+  background: #e1f2f5;
+  border-left-color: #1c7c8c;
+}
+
+/* week navigation row (student/teacher) + the admin view filter */
+.schedule-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 0.75rem 0 1rem;
+}
+
+.schedule-view-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* the admin editor's slot form: two-column grid, full rows via .span-2 */
+.schedule-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  margin-top: 1.25rem;
+}
+
+.schedule-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.schedule-form .span-2 {
+  grid-column: span 2;
+}
+
+
 /* --- app shell: Header + Navbar + <main> + Footer ------------------------ */
 
 .app-shell {

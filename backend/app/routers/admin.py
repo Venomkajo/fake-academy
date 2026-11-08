@@ -6,6 +6,8 @@ triple per entity (fields, groups, subjects, teaching assignments,
 group memberships) edits it. Every route here is admin-only.
 """
 
+import datetime
+
 import sqlalchemy as sa
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -15,11 +17,18 @@ from app.deps import require_roles
 
 from app.models.field_of_study import FieldOfStudy
 from app.models.group_membership import GroupMembership
+from app.models.lesson_slot import LessonSlot
 from app.models.student_group import StudentGroup
 from app.models.subject import Subject
 from app.models.teaching_assignment import TeachingAssignment
 from app.models.user import User, UserRole
 
+from app.routers.schedule import fetch_slot_row, fetch_slot_rows
+from app.schemas.schedule import (
+    LessonSlotCreate,
+    LessonSlotOut,
+    LessonSlotUpdate,
+)
 from app.schemas.structure import (
     FieldOfStudyCreate,
     FieldOfStudyPublic,
@@ -384,12 +393,162 @@ def delete_group_membership(
     _commit_or_conflict(db, "Nie można usunąć członkostwa")
 
 
-@router.get("/schedule")
-def get_schedule():
-    """Get the schedule of the application. Admin-only."""
-    # This is a placeholder for the actual implementation.
-    # You would typically query the database for the schedule information.
-    return []
+# --- lesson slots: the timetable editor (README A3) ------------------------
+#
+# One weekly recurring entry per teaching assignment. The hard part is
+# collision validation: within one day, a room, a student group and a
+# teacher may each be busy in at most one lesson — overlapping slots are
+# rejected with a 409 naming the exact clashing lesson.
+
+
+def _check_slot_conflicts(
+    db: Session,
+    slot_id: int | None,
+    assignment: TeachingAssignment,
+    day: int,
+    start: datetime.time,
+    end: datetime.time,
+    room: str,
+) -> None:
+    """Reject a slot that double-books a room, a group or a teacher (400/409)."""
+    if start >= end:
+        raise HTTPException(
+            status_code=400,
+            detail="Godzina zakończenia musi być późniejsza niż godzina rozpoczęcia",
+        )
+    # Candidates: same-day slots whose time window overlaps the proposed one
+    # (start < other.end AND other.start < end). The joined names let the
+    # 409 message name the exact clashing lesson instead of a bare id.
+    query = (
+        sa.select(LessonSlot, TeachingAssignment, User, StudentGroup, Subject)
+        .join(TeachingAssignment, TeachingAssignment.id == LessonSlot.assignment_id)
+        .join(User, User.id == TeachingAssignment.teacher_id)
+        .join(StudentGroup, StudentGroup.id == TeachingAssignment.group_id)
+        .join(Subject, Subject.id == TeachingAssignment.subject_id)
+        .where(
+            LessonSlot.day_of_week == day,
+            LessonSlot.start_time < end,
+            LessonSlot.end_time > start,
+        )
+    )
+    if slot_id is not None:
+        # A PATCH excludes the row being edited from its own conflict check.
+        query = query.where(LessonSlot.id != slot_id)
+    for other_slot, other_assignment, teacher, group, subject in db.execute(query):
+        hours = f"{other_slot.start_time:%H:%M}–{other_slot.end_time:%H:%M}"
+        if other_slot.room == room:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Sala „{room}” jest już zajęta: {subject.name}, "
+                    f"grupa {group.name}, {hours}"
+                ),
+            )
+        if other_assignment.group_id == assignment.group_id:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Grupa {group.name} ma już wtedy zajęcia: {subject.name}, "
+                    f"sala {other_slot.room}, {hours}"
+                ),
+            )
+        if other_assignment.teacher_id == assignment.teacher_id:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"{teacher.first_name} {teacher.last_name} prowadzi już wtedy "
+                    f"zajęcia: {subject.name}, grupa {group.name}, {hours}"
+                ),
+            )
+
+
+@router.get("/lesson-slots", response_model=list[LessonSlotOut])
+def list_lesson_slots(
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> list[LessonSlotOut]:
+    """Return every lesson slot with subject/teacher/group names. Admin-only."""
+    return fetch_slot_rows(db)
+
+
+@router.post("/lesson-slots", response_model=LessonSlotOut, status_code=201)
+def create_lesson_slot(
+    body: LessonSlotCreate,
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> LessonSlotOut:
+    """Add one timetable slot to a teaching assignment. Admin-only."""
+    assignment = _get_or_404(db, TeachingAssignment, body.assignment_id, "przypisanie")
+    _check_slot_conflicts(
+        db,
+        None,
+        assignment,
+        body.day_of_week,
+        body.start_time,
+        body.end_time,
+        body.room,
+    )
+    slot = LessonSlot(
+        assignment_id=assignment.id,
+        day_of_week=body.day_of_week,
+        start_time=body.start_time,
+        end_time=body.end_time,
+        room=body.room,
+    )
+    db.add(slot)
+    _commit_or_conflict(db, "Nie można dodać zajęć")
+    # The flattened response (with the joined names) is one extra read, not
+    # a second write path.
+    out = fetch_slot_row(db, slot.id)
+    if out is None:  # unreachable: the row was committed above
+        raise HTTPException(status_code=500, detail="Nie udało się odczytać zajęć")
+    return out
+
+
+@router.patch("/lesson-slots/{slot_id}", response_model=LessonSlotOut)
+def edit_lesson_slot(
+    slot_id: int,
+    body: LessonSlotUpdate,
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> LessonSlotOut:
+    """Change any leg of a lesson slot (assignment, day, time, room). Admin-only."""
+    slot = _get_or_404(db, LessonSlot, slot_id, "zajęcia")
+    updates = body.model_dump(exclude_unset=True)
+    assignment_id = updates.get("assignment_id", slot.assignment_id)
+    assignment = _get_or_404(db, TeachingAssignment, assignment_id, "przypisanie")
+    # Conflict check on the EFFECTIVE values: keys the client sent override,
+    # the rest keep the row's current values.
+    _check_slot_conflicts(
+        db,
+        slot.id,
+        assignment,
+        updates.get("day_of_week", slot.day_of_week),
+        updates.get("start_time", slot.start_time),
+        updates.get("end_time", slot.end_time),
+        updates.get("room", slot.room),
+    )
+    for key, value in updates.items():
+        setattr(slot, key, value)
+    _commit_or_conflict(db, "Nie można zapisać zajęć")
+    out = fetch_slot_row(db, slot.id)
+    if out is None:  # unreachable: the row was committed above
+        raise HTTPException(status_code=500, detail="Nie udało się odczytać zajęć")
+    return out
+
+
+@router.delete("/lesson-slots/{slot_id}", status_code=204)
+def delete_lesson_slot(
+    slot_id: int,
+    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    db: Session = Depends(get_db),
+) -> None:
+    """Delete a lesson slot from the timetable. Admin-only."""
+    # Lesson topics hang off the assignment, not the slot, so a slot has no
+    # FK children and can always be removed.
+    slot = _get_or_404(db, LessonSlot, slot_id, "zajęcia")
+    db.delete(slot)
+    _commit_or_conflict(db, "Nie można usunąć zajęć")
 
 @router.get("/statistics")
 def get_statistics():

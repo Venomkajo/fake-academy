@@ -27,6 +27,8 @@ import GradesPage from './pages/GradesPage'
 import GroupsPage from './pages/GroupsPage'
 import LoginPage from './pages/LoginPage'
 import PlaceholderPage from './pages/PlaceholderPage'
+import SchedulePage from './pages/SchedulePage'
+import AdminSchedulePage from './pages/admin/AdminSchedulePage'
 import AdminStructurePage from './pages/admin/AdminStructurePage'
 import AdminUsersPage from './pages/admin/AdminUsersPage'
 
@@ -91,13 +93,13 @@ export default function App() {
             English/ASCII, page titles stay Polish (see Navbar for the links). */}
         <Route path="grades" element={<GradesPage role={user.role} />} />
         <Route path="groups" element={<GroupsPage role={user.role} />} />
-        <Route path="schedule" element={<PlaceholderPage title="Plan zajęć" />} />
+        <Route path="schedule" element={<SchedulePage role={user.role} />} />
         <Route path="messages" element={<PlaceholderPage title="Wiadomości" />} />
         <Route path="materials" element={<PlaceholderPage title="Materiały" />} />
 
         <Route path="admin/users" element={<AdminUsersPage />} />
         <Route path="admin/structure" element={<AdminStructurePage />} />
-        <Route path="admin/schedule" element={<PlaceholderPage title="Edytor planu zajęć" />} />
+        <Route path="admin/schedule" element={<AdminSchedulePage />} />
         <Route path="admin/statistics" element={<PlaceholderPage title="Statystyki systemowe" />} />
 
         {/* Nothing matched the URL -> 404 instead of a blank page. */}

@@ -9,9 +9,11 @@ The structure half covers README card A2 (Struktura uczelni): fields of
 study own student groups, subjects stand alone, teaching assignments tie
 a teacher to a subject for a group, and memberships tie students to
 groups. On top of that, grade categories and a handful of sample grades
-cover the early student/teacher views (README S1/W1/W2). Rows reference
-each other by NAME/email and the script resolves ids at runtime, so the
-seed never depends on serial values that differ between machines.
+cover the early student/teacher views (README S1/W1/W2), and a weekly
+timetable of lesson slots covers the schedule views (README A3/S2).
+Rows reference each other by NAME/email and the script resolves ids at
+runtime, so the seed never depends on serial values that differ between
+machines.
 
 Note: importing app.security (indirectly) requires JWT_SECRET to be
 set — app/config.py fails fast without it — even though seeding only
@@ -30,6 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.stdout.reconfigure(encoding="utf-8")
 
 import decimal  # noqa: E402 — stdlib, grouped with the app imports below
+import datetime  # noqa: E402
 
 import sqlalchemy as sa  # noqa: E402 — must come AFTER the sys.path tweak
 from sqlalchemy.orm import Session  # noqa: E402
@@ -39,6 +42,7 @@ from app.models.field_of_study import FieldOfStudy  # noqa: E402
 from app.models.grade import Grade  # noqa: E402
 from app.models.grade_category import GradeCategory  # noqa: E402
 from app.models.group_membership import GroupMembership  # noqa: E402
+from app.models.lesson_slot import LessonSlot  # noqa: E402
 from app.models.student_group import StudentGroup  # noqa: E402
 from app.models.subject import Subject  # noqa: E402
 from app.models.teaching_assignment import TeachingAssignment  # noqa: E402
@@ -110,6 +114,24 @@ SEED_GROUP_MEMBERSHIPS = [
     ("marek@fake.academy", "Computer Science", "CS-2026-A"),
     ("zdzislaw@fake.academy", "Computer Science", "CS-2026-B"),
     ("ewa@fake.academy", "Mathematics", "MATH-2026-A"),
+]
+
+# (teacher_email, subject_name, field_name, group_name, day_of_week, start, end,
+#  room) — the weekly timetable of each seeded assignment (README A3/S2).
+# day_of_week: 0 = Monday .. 6 = Sunday; blocks are the typical 90 minutes.
+# The set below deliberately respects all three conflict rules (room, group,
+# teacher) so it stays insertable through the same validation the API uses.
+SEED_LESSON_SLOTS = [
+    ("anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", 0, "10:15", "11:45", "A-3.14"),
+    ("anna@fake.academy", "Algorithms and Data Structures", "Computer Science", "CS-2026-A", 3, "08:00", "09:30", "A-3.14"),
+    ("anna@fake.academy", "Databases", "Computer Science", "CS-2026-A", 1, "09:45", "11:15", "B-1.07"),
+    ("anna@fake.academy", "Databases", "Computer Science", "CS-2026-A", 2, "13:00", "14:30", "B-0.11"),
+    ("piotr@fake.academy", "Databases", "Computer Science", "CS-2026-B", 1, "11:30", "13:00", "B-1.07"),
+    ("piotr@fake.academy", "Databases", "Computer Science", "CS-2026-B", 4, "10:15", "11:45", "B-1.07"),
+    ("piotr@fake.academy", "Calculus", "Mathematics", "MATH-2026-A", 0, "08:00", "09:30", "C-2.01"),
+    ("piotr@fake.academy", "Calculus", "Mathematics", "MATH-2026-A", 2, "11:15", "12:45", "C-2.01"),
+    ("piotr@fake.academy", "Linear Algebra", "Mathematics", "MATH-2026-A", 3, "11:15", "12:45", "C-2.01"),
+    ("piotr@fake.academy", "Linear Algebra", "Mathematics", "MATH-2026-A", 4, "13:00", "14:30", "C-1.10"),
 ]
 
 # (teacher_email, subject_name, field_name, group_name, category_name, weight):
@@ -358,6 +380,47 @@ def seed_group_memberships(db: Session) -> int:
     return inserted
 
 
+def seed_lesson_slots(db: Session) -> int:
+    """Insert missing lesson slots; return how many were added."""
+    inserted = 0
+    print("Seeding lesson slots:")
+    for (
+        teacher_email,
+        subject_name,
+        field_name,
+        group_name,
+        day,
+        start,
+        end,
+        room,
+    ) in SEED_LESSON_SLOTS:
+        assignment = _assignment_by_key(db, teacher_email, subject_name, field_name, group_name)
+        start_time = datetime.time.fromisoformat(start)
+        exists = db.scalar(
+            sa.select(LessonSlot).where(
+                LessonSlot.assignment_id == assignment.id,
+                LessonSlot.day_of_week == day,
+                LessonSlot.start_time == start_time,
+            )
+        )
+        if exists is not None:
+            print(f"  skip (already exists): {group_name:<12} {subject_name:<34} day={day} {start}")
+            continue
+
+        db.add(
+            LessonSlot(
+                assignment_id=assignment.id,
+                day_of_week=day,
+                start_time=start_time,
+                end_time=datetime.time.fromisoformat(end),
+                room=room,
+            )
+        )
+        inserted += 1
+        print(f"  add: {group_name:<12} {subject_name:<34} day={day} {start}-{end} {room}")
+    return inserted
+
+
 def seed_grade_categories(db: Session) -> int:
     """Insert missing grade categories; return how many were added."""
     inserted = 0
@@ -448,6 +511,8 @@ def main() -> None:
         db.flush()
         inserted += seed_group_memberships(db)
         db.flush()
+        inserted += seed_lesson_slots(db)
+        db.flush()
         inserted += seed_grade_categories(db)
         db.flush()
         inserted += seed_grades(db)
@@ -462,6 +527,7 @@ def main() -> None:
             + len(SEED_SUBJECTS)
             + len(SEED_TEACHING_ASSIGNMENTS)
             + len(SEED_GROUP_MEMBERSHIPS)
+            + len(SEED_LESSON_SLOTS)
             + len(SEED_GRADE_CATEGORIES)
             + len(SEED_GRADES)
         )
