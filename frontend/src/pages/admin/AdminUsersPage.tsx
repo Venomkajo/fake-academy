@@ -11,9 +11,10 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { fetchAllUsers, updateUser } from '../../api/admin'
-import { apiErrorMessage, ROLE_LABELS, type Role, type UserPublic } from '../../api/auth'
+import { ROLE_LABELS, type Role, type UserPublic } from '../../api/auth'
 
 import EntitySection, { type EntityFieldDef } from '../../components/admin/EntitySection'
+import { ErrorMessage, QueryStatus } from '../../components/common/QueryStatus'
 
 /**
  * Select options of the role column/select, derived from the shared
@@ -78,14 +79,10 @@ export default function AdminUsersPage({ me }: { me: UserPublic }) {
   ]
 
   if (usersQuery.isLoading) {
-    return <p className="muted">Ładowanie…</p>
+    return <QueryStatus isLoading />
   }
   if (usersQuery.isError) {
-    return (
-      <p role="alert" style={{ color: 'var(--color-danger)' }}>
-        {apiErrorMessage(usersQuery.error)}
-      </p>
-    )
+    return <ErrorMessage error={usersQuery.error} />
   }
 
   return (

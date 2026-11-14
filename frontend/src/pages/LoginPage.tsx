@@ -10,6 +10,8 @@ import { useMutation } from '@tanstack/react-query'
 
 import { apiErrorMessage, fetchCurrentUser, login, type UserPublic } from '../api/auth'
 
+import { ErrorMessage } from '../components/common/QueryStatus'
+
 // Props: the ONLY way a parent (App) passes data/callbacks down.
 interface Props {
   onLoggedIn: (user: UserPublic) => void
@@ -77,11 +79,7 @@ export default function LoginPage({ onLoggedIn }: Props) {
           </button>
 
           {/* role="alert" -> screen readers announce the error */}
-          {error && (
-            <p role="alert" style={{ color: 'var(--color-danger)' }}>
-              {error}
-            </p>
-          )}
+          <ErrorMessage>{error}</ErrorMessage>
         </form>
 
         <p className="muted" style={{ fontSize: '0.85rem', marginTop: '2rem' }}>

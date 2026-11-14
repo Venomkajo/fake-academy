@@ -19,6 +19,8 @@ import {
   type Message,
 } from '../../api/messages'
 
+import { ErrorMessage, QueryStatus } from '../common/QueryStatus'
+
 /** One private thread: the other person + its messages (newest first). */
 interface Thread {
   otherId: number
@@ -216,14 +218,10 @@ export default function MessagesView({ role, callerId, callerName }: Props) {
   const contactGroups = contactsQuery.data?.groups ?? []
 
   if (messagesQuery.isLoading) {
-    return <p className="muted">Ładowanie…</p>
+    return <QueryStatus isLoading />
   }
   if (messagesQuery.isError) {
-    return (
-      <p role="alert" style={{ color: 'var(--color-danger)' }}>
-        {apiErrorMessage(messagesQuery.error)}
-      </p>
-    )
+    return <ErrorMessage error={messagesQuery.error} />
   }
 
   return (
@@ -323,11 +321,7 @@ export default function MessagesView({ role, callerId, callerName }: Props) {
             </button>
             <span className="muted">jako {callerName}</span>
           </div>
-          {composeError && (
-            <p role="alert" style={{ color: 'var(--color-danger)', margin: 0 }}>
-              {composeError}
-            </p>
-          )}
+          <ErrorMessage>{composeError}</ErrorMessage>
         </form>
       )}
 
@@ -391,11 +385,7 @@ export default function MessagesView({ role, callerId, callerName }: Props) {
                   <button type="submit" className="btn" disabled={replyMutation.isPending}>
                     {replyMutation.isPending ? 'Wysyłanie…' : 'Wyślij odpowiedź'}
                   </button>
-                  {replyError && (
-                    <p role="alert" style={{ color: 'var(--color-danger)', margin: 0 }}>
-                      {replyError}
-                    </p>
-                  )}
+                  <ErrorMessage>{replyError}</ErrorMessage>
                 </form>
               </>
             ) : (
@@ -405,12 +395,8 @@ export default function MessagesView({ role, callerId, callerName }: Props) {
         </div>
       ) : (
         <div className="messages-announcements">
-          {announcementsQuery.isLoading && <p className="muted">Ładowanie…</p>}
-          {announcementsQuery.isError && (
-            <p role="alert" style={{ color: 'var(--color-danger)' }}>
-              {apiErrorMessage(announcementsQuery.error)}
-            </p>
-          )}
+          <QueryStatus isLoading={announcementsQuery.isLoading} />
+          <ErrorMessage error={announcementsQuery.error} />
           {(announcementsQuery.data ?? []).length === 0 && (
             <p className="muted">Brak ogłoszeń grupowych.</p>
           )}

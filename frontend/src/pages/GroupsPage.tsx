@@ -8,8 +8,9 @@
 import { useQuery } from '@tanstack/react-query'
 
 import type { Role } from '../api/auth'
-import { apiErrorMessage } from '../api/auth'
 import { fetchMyGroups, fetchTaughtGroups } from '../api/groups'
+
+import { ErrorMessage, QueryStatus } from '../components/common/QueryStatus'
 
 interface Props {
   role: Role
@@ -52,12 +53,8 @@ export default function GroupsPage({ role }: Props) {
           : 'Przedmioty prowadzone w poszczególnych grupach.'}
       </p>
 
-      {query.isLoading && <p className="muted">Ładowanie…</p>}
-      {query.isError && (
-        <p role="alert" style={{ color: 'var(--color-danger)' }}>
-          {apiErrorMessage(query.error)}
-        </p>
-      )}
+      <QueryStatus isLoading={query.isLoading} />
+      <ErrorMessage error={query.error} />
 
       {query.isSuccess && isStudent && (
         <>

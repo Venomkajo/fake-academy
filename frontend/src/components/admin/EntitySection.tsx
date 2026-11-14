@@ -14,6 +14,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { apiErrorMessage } from '../../api/auth'
 
+import { ErrorMessage } from '../common/QueryStatus'
+
 /** Values of one entity form, keyed by field key — inputs are strings. */
 export type FormValues = Record<string, string>
 
@@ -223,11 +225,7 @@ export default function EntitySection({ title, fields, rows, cacheKey, create, u
               </button>
             )}
           </div>
-          {error && (
-            <p role="alert" style={{ color: 'var(--color-danger)', margin: 0 }}>
-              {error}
-            </p>
-          )}
+          <ErrorMessage>{error}</ErrorMessage>
         </form>
       )}
 

@@ -23,6 +23,8 @@ import {
   type TeachingAssignment,
 } from '../../api/grades'
 
+import { ErrorMessage, QueryStatus } from '../../components/common/QueryStatus'
+
 /** Result of parsing one gradebook cell's input. */
 type ParsedCell =
   | { kind: 'empty' }
@@ -122,11 +124,7 @@ function GradeCell({
         aria-label={`Ocena: ${studentName}, ${categoryName}`}
       />
       {saveMutation.isPending && <span className="muted"> …</span>}
-      {error && (
-        <div role="alert" style={{ color: 'var(--color-danger)', fontSize: '0.75rem', margin: 0 }}>
-          {error}
-        </div>
-      )}
+      <ErrorMessage small>{error}</ErrorMessage>
     </td>
   )
 }
@@ -261,11 +259,7 @@ function CategoryPanel({ assignment }: { assignment: TeachingAssignment }) {
         </button>
       </form>
 
-      {error && (
-        <p role="alert" style={{ color: 'var(--color-danger)', margin: '0.5rem 0 0' }}>
-          {error}
-        </p>
-      )}
+      <ErrorMessage className="is-spaced">{error}</ErrorMessage>
     </section>
   )
 }
@@ -284,14 +278,10 @@ export default function TeacherGradesPage() {
   })
 
   if (teachingQuery.isLoading) {
-    return <p className="muted">Ładowanie…</p>
+    return <QueryStatus isLoading />
   }
   if (teachingQuery.isError) {
-    return (
-      <p role="alert" style={{ color: 'var(--color-danger)' }}>
-        {apiErrorMessage(teachingQuery.error)}
-      </p>
-    )
+    return <ErrorMessage error={teachingQuery.error} />
   }
 
   const sheet = sheetQuery.data
@@ -332,11 +322,9 @@ export default function TeacherGradesPage() {
           {selected.categories.length === 0 ? (
             <p className="muted">Dodaj kategorię, aby wystawiać oceny.</p>
           ) : sheetQuery.isLoading ? (
-            <p className="muted">Ładowanie dziennika…</p>
+            <QueryStatus isLoading label="Ładowanie dziennika…" />
           ) : sheetQuery.isError ? (
-            <p role="alert" style={{ color: 'var(--color-danger)' }}>
-              {apiErrorMessage(sheetQuery.error)}
-            </p>
+            <ErrorMessage error={sheetQuery.error} />
           ) : (sheet?.students.length ?? 0) === 0 ? (
             <p className="muted">Ta grupa nie ma jeszcze studentów.</p>
           ) : (

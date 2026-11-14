@@ -19,6 +19,7 @@ import {
 import { apiErrorMessage } from '../../api/auth'
 import { fetchAllUsers, fetchStructure } from '../../api/admin'
 
+import { ErrorMessage, QueryStatus } from '../../components/common/QueryStatus'
 import WeekGrid, {
   DAY_LABELS,
   minutesToTime,
@@ -191,14 +192,10 @@ export default function AdminSchedulePage() {
   })
 
   if (slotsQuery.isLoading) {
-    return <p className="muted">Ładowanie…</p>
+    return <QueryStatus isLoading />
   }
   if (slotsQuery.isError) {
-    return (
-      <p role="alert" style={{ color: 'var(--color-danger)' }}>
-        {apiErrorMessage(slotsQuery.error)}
-      </p>
-    )
+    return <ErrorMessage error={slotsQuery.error} />
   }
 
   return (
@@ -332,11 +329,7 @@ export default function AdminSchedulePage() {
           )}
         </div>
 
-        {error && (
-          <p role="alert" className="span-2" style={{ color: 'var(--color-danger)', margin: 0 }}>
-            {error}
-          </p>
-        )}
+        <ErrorMessage className="span-2">{error}</ErrorMessage>
       </form>
     </section>
   )

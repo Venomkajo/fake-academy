@@ -7,9 +7,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-import { apiErrorMessage } from '../../api/auth'
 import { fetchTeachingSchedule } from '../../api/schedule'
 
+import { ErrorMessage, QueryStatus } from '../../components/common/QueryStatus'
 import WeekGrid, { addDays, mondayOf } from '../../components/schedule/WeekGrid'
 
 /** "3–9 listopada 2026" style label for one week, given its Monday. */
@@ -31,14 +31,10 @@ export default function TeacherSchedulePage() {
   const [weekStart, setWeekStart] = useState(() => mondayOf(new Date()))
 
   if (scheduleQuery.isLoading) {
-    return <p className="muted">Ładowanie…</p>
+    return <QueryStatus isLoading />
   }
   if (scheduleQuery.isError) {
-    return (
-      <p role="alert" style={{ color: 'var(--color-danger)' }}>
-        {apiErrorMessage(scheduleQuery.error)}
-      </p>
-    )
+    return <ErrorMessage error={scheduleQuery.error} />
   }
 
   const slots = scheduleQuery.data ?? []

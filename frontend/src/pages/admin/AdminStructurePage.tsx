@@ -27,8 +27,8 @@ import {
   updateSubject,
   updateTeachingAssignment,
 } from '../../api/admin'
-import { apiErrorMessage } from '../../api/auth'
 
+import { ErrorMessage, QueryStatus } from '../../components/common/QueryStatus'
 import EntitySection, {
   type EntityFieldDef,
   type FormValues,
@@ -158,14 +158,10 @@ export default function AdminStructurePage() {
   ]
 
   if (structureQuery.isLoading) {
-    return <p className="muted">Ładowanie…</p>
+    return <QueryStatus isLoading />
   }
   if (structureQuery.isError) {
-    return (
-      <p role="alert" style={{ color: 'var(--color-danger)' }}>
-        {apiErrorMessage(structureQuery.error)}
-      </p>
-    )
+    return <ErrorMessage error={structureQuery.error} />
   }
 
   const active = entities.find((entity) => entity.key === activeKey) ?? entities[0]

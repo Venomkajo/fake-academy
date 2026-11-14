@@ -7,7 +7,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { fetchAdminStats } from '../../api/admin'
-import { apiErrorMessage, ROLE_LABELS } from '../../api/auth'
+import { ROLE_LABELS } from '../../api/auth'
+
+import { ErrorMessage, QueryStatus } from '../../components/common/QueryStatus'
 
 /** One counter card: a big number with its label and an optional hint line. */
 interface StatCard {
@@ -36,14 +38,10 @@ export default function AdminStatisticsPage() {
   const statsQuery = useQuery({ queryKey: ['admin_stats'], queryFn: fetchAdminStats })
 
   if (statsQuery.isLoading) {
-    return <p className="muted">Ładowanie…</p>
+    return <QueryStatus isLoading />
   }
   if (statsQuery.isError) {
-    return (
-      <p role="alert" style={{ color: 'var(--color-danger)' }}>
-        {apiErrorMessage(statsQuery.error)}
-      </p>
-    )
+    return <ErrorMessage error={statsQuery.error} />
   }
 
   const stats = statsQuery.data!

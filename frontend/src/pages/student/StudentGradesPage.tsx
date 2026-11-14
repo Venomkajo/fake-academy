@@ -7,8 +7,9 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-import { apiErrorMessage } from '../../api/auth'
 import { fetchMyGrades, type GradeForStudent } from '../../api/grades'
+
+import { ErrorMessage, QueryStatus } from '../../components/common/QueryStatus'
 
 /** One subject card's content: everything shown between its <summary> rows. */
 interface SubjectSection {
@@ -67,14 +68,10 @@ export default function StudentGradesPage() {
   const subjects = useMemo(() => groupBySubject(gradesQuery.data ?? []), [gradesQuery.data])
 
   if (gradesQuery.isLoading) {
-    return <p className="muted">Ładowanie…</p>
+    return <QueryStatus isLoading />
   }
   if (gradesQuery.isError) {
-    return (
-      <p role="alert" style={{ color: 'var(--color-danger)' }}>
-        {apiErrorMessage(gradesQuery.error)}
-      </p>
-    )
+    return <ErrorMessage error={gradesQuery.error} />
   }
 
   return (

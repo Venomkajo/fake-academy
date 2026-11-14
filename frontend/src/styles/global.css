@@ -120,6 +120,24 @@ a:hover {
   color: #fff;
 }
 
+/* --- query state (loading notice / error line) --------------------------- */
+
+/* the red error line every failed query/form shows; role="alert" comes from <ErrorMessage> */
+.error-message {
+  color: var(--color-danger);
+  margin: 0;
+}
+
+/* compact variant for tight spots (gradebook cells under an input) */
+.error-message.is-small {
+  font-size: 0.75rem;
+}
+
+/* variant with breathing room above (errors closing a card) */
+.error-message.is-spaced {
+  margin-top: 0.5rem;
+}
+
 /* --- data tables --------------------------------------------------------- */
 
 .data-table {
