@@ -3,7 +3,7 @@
 // Presentational component: ALL data arrives via props (`user`,
 // `onLogout`) — it owns no state and calls no API itself.
 // Styling comes from global.css (.app-header, .brand, .user-chip).
-import type { UserPublic } from '../../api/auth'
+import { ROLE_LABELS, type UserPublic } from '../../api/auth'
 
 interface Props {
   user: UserPublic
@@ -20,7 +20,7 @@ export default function Header({ user, onLogout }: Props) {
         <div className="user-chip">
           {/* title = full email on hover, keeps the bar compact */}
           <span title={user.email}>
-            {user.first_name} {user.last_name} · {user.role}
+            {user.first_name} {user.last_name} · {ROLE_LABELS[user.role]}
           </span>
           <button type="button" className="btn btn-ghost" onClick={onLogout}>
             Wyloguj się

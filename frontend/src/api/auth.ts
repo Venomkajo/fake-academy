@@ -5,6 +5,19 @@ import { api, TOKEN_KEY } from './client'
 /** Account roles; mirror of the backend's UserRole enum (RBAC lives in app/deps.py). */
 export type Role = 'student' | 'teacher' | 'admin'
 
+/**
+ * Polish UI labels for the role VALUES as the API returns them. Role values
+ * stay English everywhere (URLs, API payloads, RBAC) — only the displayed
+ * text is Polish. ONE shared map: every select option, chart row or info
+ * line renders through it, so the teacher role is never spelled "nauczyciel"
+ * in one place and "wykładowca" in another.
+ */
+export const ROLE_LABELS: Record<Role, string> = {
+  student: 'Student',
+  teacher: 'Wykładowca',
+  admin: 'Administrator',
+}
+
 /** User as the API returns it (/auth/me, /admin/users) — no password hash, ever. */
 export interface UserPublic {
   id: number

@@ -11,16 +11,16 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { fetchAllUsers, updateUser } from '../../api/admin'
-import { apiErrorMessage, type Role, type UserPublic } from '../../api/auth'
+import { apiErrorMessage, ROLE_LABELS, type Role, type UserPublic } from '../../api/auth'
 
 import EntitySection, { type EntityFieldDef } from '../../components/admin/EntitySection'
 
-/** Fixed options of the role column/select. */
-const ROLE_OPTIONS = [
-  { value: 'student', label: 'Student' },
-  { value: 'teacher', label: 'Nauczyciel' },
-  { value: 'admin', label: 'Administrator' },
-]
+/**
+ * Select options of the role column/select, derived from the shared
+ * ROLE_LABELS map (api/auth.ts) — one source of the Polish labels, so no
+ * page re-spells them locally. Iteration order = the map's insertion order.
+ */
+const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }))
 
 /** Fixed options of the active-flag column/select. */
 const ACTIVE_OPTIONS = [

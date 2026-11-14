@@ -7,14 +7,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { fetchAdminStats } from '../../api/admin'
-import { apiErrorMessage } from '../../api/auth'
-
-/** Polish labels for the roles as the API returns them. */
-const ROLE_LABELS: Record<string, string> = {
-  student: 'Studenci',
-  teacher: 'Wykładowcy',
-  admin: 'Administratorzy',
-}
+import { apiErrorMessage, ROLE_LABELS } from '../../api/auth'
 
 /** One counter card: a big number with its label and an optional hint line. */
 interface StatCard {
@@ -104,7 +97,7 @@ export default function AdminStatisticsPage() {
       <div className="stats-chart">
         {stats.users_by_role.map((role) => (
           <div key={role.role} className="stats-bar-row">
-            <span>{ROLE_LABELS[role.role] ?? role.role}</span>
+            <span>{ROLE_LABELS[role.role]}</span>
             <div
               className="stats-bar-track"
               title={`${role.active} aktywnych z ${role.total}`}
