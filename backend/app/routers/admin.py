@@ -52,7 +52,7 @@ from app.schemas.structure import (
     TeachingAssignmentPublic,
     TeachingAssignmentUpdate,
 )
-from app.schemas.user import UserPublic
+from app.schemas.user import UserPublic, UserUpdate
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -607,36 +607,35 @@ def get_user(
     _admin: User = Depends(require_roles(UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ) -> UserPublic:
-    """Get user information by ID. Admin-only."""
-    user = db.get(User, user_id)
-    if not user:
-        raise sa.exc.NoResultFound(f"User with id {user_id} not found")
-    return user
+    """Get one account's data by id. Admin-only."""
+    # _get_or_404, not a bare db.get + raise NoResultFound: an unknown id
+    # must answer 404, not blow up as an unhandled 500.
+    return _get_or_404(db, User, user_id, "użytkownik")
 
-@router.put("/users/{user_id}", response_model=UserPublic)
+@router.patch("/users/{user_id}", response_model=UserPublic)
 def edit_user(
     user_id: int,
-    updated_user: UserPublic,
-    _admin: User = Depends(require_roles(UserRole.ADMIN)),
+    body: UserUpdate,
+    admin: User = Depends(require_roles(UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ) -> UserPublic:
-    """Edit user information. Admin-only."""
-    user = db.get(User, user_id)
-    if not user:
-        raise sa.exc.NoResultFound(f"User with id {user_id} not found")
+    """Edit an account's data, role or active flag. Admin-only (README A1)."""
+    
+    user = _get_or_404(db, User, user_id, "użytkownik")
+    updates = body.model_dump(exclude_unset=True)
 
-    for field in ['first_name', 'last_name', 'email', 'role', 'is_active']:
-        if getattr(updated_user, field) is None:
-            raise ValueError(f"{field} cannot be None")
+    if user.id == admin.id and (
+        ("role" in updates and updates["role"] != user.role)
+        or ("is_active" in updates and not updates["is_active"])
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Nie można zmienić własnej roli ani dezaktywować własnego konta",
+        )
 
-    # Update user fields with new information
-    user.first_name = updated_user.first_name
-    user.last_name = updated_user.last_name
-    user.email = updated_user.email
-    user.role = updated_user.role
-    user.is_active = updated_user.is_active
-
-    db.commit()
+    for key, value in updates.items():
+        setattr(user, key, value)
+    # A taken email (users.email is unique) lands here as 409, not a 500.
+    _commit_or_conflict(db, "Nie można zapisać zmian — e-mail może być zajęty")
     db.refresh(user)
-
     return user

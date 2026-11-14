@@ -1,7 +1,7 @@
 // Admin users screen (route "/admin/users", README card A1): the account
 // list with inline editing, rendered by the same generic EntitySection
 // the structure panel uses. Roles and the active flag become selects
-// ('ref' fields over fixed options); saving is PUT /admin/users/{id} via
+// ('ref' fields over fixed options); saving is PATCH /admin/users/{id} via
 // a useMutation invalidating the ['admin_users'] cache. Account creation
 // has no endpoint yet, so the form only appears while editing a row.
 // Above the table: a search box (any text fragment) + a role filter; the
@@ -128,7 +128,6 @@ export default function AdminUsersPage({ me }: { me: UserPublic }) {
         isRowEditable={(id) => id !== me.id}
         update={(id, v) =>
           updateUser(id, {
-            id,
             first_name: v.first_name.trim(),
             last_name: v.last_name.trim(),
             email: v.email.trim(),

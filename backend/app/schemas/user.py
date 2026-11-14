@@ -22,3 +22,16 @@ class UserPublic(pydantic.BaseModel):
     last_name: str
     role: UserRole
     is_active: bool
+
+
+class UserUpdate(pydantic.BaseModel):
+    """Body of PATCH /admin/users/{id}; only the sent keys are applied."""
+
+    # A dedicated REQUEST schema — UserPublic stays the response shape. No id
+    # here (the URL already names the account) and every key optional, so the
+    # endpoint stays partial like the structure PATCH endpoints.
+    email: pydantic.EmailStr | None = None
+    first_name: str | None = pydantic.Field(default=None, min_length=1)
+    last_name: str | None = pydantic.Field(default=None, min_length=1)
+    role: UserRole | None = None
+    is_active: bool | None = None

@@ -7,9 +7,21 @@ export async function fetchAllUsers(): Promise<UserPublic[]> {
   return response.data
 }
 
-/** PUT /admin/users/{userId} — updates a user's information. */
-export async function updateUser(userId: number, updates: UserPublic): Promise<UserPublic> {
-  const response = await api.put<UserPublic>(`/admin/users/${userId}`, updates)
+/**
+ * Body of PATCH /admin/users/{userId}; only the sent keys are applied.
+ * No id in the body — the URL already names the account.
+ */
+export type UserUpdatePayload = {
+  first_name?: string
+  last_name?: string
+  email?: string
+  role?: Role
+  is_active?: boolean
+}
+
+/** PATCH /admin/users/{userId} — partially update a user's account. */
+export async function updateUser(userId: number, updates: UserUpdatePayload): Promise<UserPublic> {
+  const response = await api.patch<UserPublic>(`/admin/users/${userId}`, updates)
   return response.data
 }
 
