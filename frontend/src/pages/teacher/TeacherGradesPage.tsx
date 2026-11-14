@@ -54,11 +54,22 @@ interface GradeCellProps {
   assignmentId: number
   studentId: number
   categoryId: number
+  /** Student's display name — makes the cell's aria-label unique per row. */
+  studentName: string
+  /** Category name (column header) for the same reason. */
+  categoryName: string
   grade: SheetGrade | null
 }
 
 /** One editable gradebook cell: draft input + save-on-Enter/blur mutation. */
-function GradeCell({ assignmentId, studentId, categoryId, grade }: GradeCellProps) {
+function GradeCell({
+  assignmentId,
+  studentId,
+  categoryId,
+  studentName,
+  categoryName,
+  grade,
+}: GradeCellProps) {
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState(grade ? existingText(grade) : '')
   const [error, setError] = useState<string | null>(null)
@@ -108,7 +119,7 @@ function GradeCell({ assignmentId, studentId, categoryId, grade }: GradeCellProp
         }}
         disabled={saveMutation.isPending}
         placeholder="—"
-        aria-label="Ocena"
+        aria-label={`Ocena: ${studentName}, ${categoryName}`}
       />
       {saveMutation.isPending && <span className="muted"> …</span>}
       {error && (
@@ -170,6 +181,23 @@ function CategoryPanel({ assignment }: { assignment: TeachingAssignment }) {
     addMutation.mutate()
   }
 
+  function handleRemove(categoryId: number, categoryName: string) {
+    // Destructive + guarded server-side (409 when grades exist) — but the
+    // user should still decide consciously, so confirm with the name.
+    if (
+      !window.confirm(
+        `Usunąć kategorię „${categoryName}” z tego przedmiotu? Kategoria z wystawionymi ocenami zostanie odrzucona.`,
+      )
+    ) {
+      return
+    }
+    removeMutation.mutate(categoryId)
+  }
+
+  // Sum of weights — read-only context for the teacher (the weighted
+  // average divides by it, so a sum ≠ 100 skews every student's average).
+  const weightSum = assignment.categories.reduce((sum, category) => sum + category.weight, 0)
+
   return (
     <section className="card" style={{ marginTop: '1rem' }}>
       <h2 style={{ marginTop: 0 }}>Kategorie ocen</h2>
@@ -177,6 +205,16 @@ function CategoryPanel({ assignment }: { assignment: TeachingAssignment }) {
       {assignment.categories.length === 0 && (
         <p className="muted" style={{ marginTop: 0 }}>
           Brak kategorii — dodaj pierwszą (np. Egzamin, waga 60), żeby wystawiać oceny.
+        </p>
+      )}
+
+      {assignment.categories.length > 0 && (
+        <p className="muted" style={{ margin: '0.25rem 0 0.5rem' }}>
+          Suma wag:{' '}
+          <strong style={{ color: weightSum === 100 ? 'var(--color-text)' : 'var(--color-danger)' }}>
+            {weightSum}%
+          </strong>{' '}
+          {weightSum !== 100 && '(średnia ważona zakłada sumę 100%)'}
         </p>
       )}
 
@@ -190,7 +228,7 @@ function CategoryPanel({ assignment }: { assignment: TeachingAssignment }) {
               type="button"
               className="btn btn-danger"
               disabled={removeMutation.isPending}
-              onClick={() => removeMutation.mutate(category.id)}
+              onClick={() => handleRemove(category.id, category.name)}
             >
               Usuń
             </button>
@@ -325,6 +363,8 @@ export default function TeacherGradesPage() {
                         assignmentId={selected.id}
                         studentId={student.id}
                         categoryId={category.id}
+                        studentName={`${student.last_name} ${student.first_name}`}
+                        categoryName={category.name}
                         grade={
                           sheet!.grades.find(
                             (g) => g.student_id === student.id && g.category_id === category.id,

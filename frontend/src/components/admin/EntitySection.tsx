@@ -9,7 +9,7 @@
 // rows get no Usuń button without a `remove` callback. Saving/deleting
 // are useMutations invalidating the given cache key, so tables refetch
 // after every change; delete asks for confirmation first.
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { apiErrorMessage } from '../../api/auth'
@@ -39,6 +39,11 @@ interface Props {
   update: (id: number, values: FormValues) => Promise<unknown>
   /** Delete callback; when absent the rows get no Usuń button. */
   remove?: (id: number) => Promise<unknown>
+  /**
+   * Rows this predicate rejects get no Edytuj button (e.g. the admin's own
+   * account in the users panel); omit = every row editable.
+   */
+  isRowEditable?: (id: number) => boolean
 }
 
 /** Render one field's cell: refs as labels, nulls/empties as a dash. */
@@ -51,7 +56,7 @@ function displayValue(field: EntityFieldDef, row: Record<string, string | number
   return String(raw)
 }
 
-export default function EntitySection({ title, fields, rows, cacheKey, create, update, remove }: Props) {
+export default function EntitySection({ title, fields, rows, cacheKey, create, update, remove, isRowEditable }: Props) {
   const queryClient = useQueryClient()
 
   // One form for both modes: editingId === null means "add", otherwise the
@@ -59,6 +64,15 @@ export default function EntitySection({ title, fields, rows, cacheKey, create, u
   const [values, setValues] = useState<FormValues>({})
   const [editingId, setEditingId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+
+  // Clicking Edytuj mounts/updates the form ABOVE the table — with a long
+  // list that is off-screen, so pull it into view after the render commits.
+  useEffect(() => {
+    if (editingId !== null) {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [editingId])
 
   const saveMutation = useMutation({
     // Without a create callback the form never renders in add mode, so
@@ -126,8 +140,11 @@ export default function EntitySection({ title, fields, rows, cacheKey, create, u
 
   function handleDelete(row: Record<string, string | number | null>) {
     // Native confirm(): no dialog library in the stack, and a blocking
-    // yes/no question is all this destructive action needs.
-    if (!window.confirm(`Czy na pewno usunąć wpis #${row.id}? Tej operacji nie można cofnąć.`)) {
+    // yes/no question is all this destructive action needs. The message
+    // names the record (first field's display value) instead of a bare id.
+    const name =
+      fields.length > 0 ? displayValue(fields[0], row) : `#${String(row.id)}`
+    if (!window.confirm(`Czy na pewno usunąć „${name}”? Tej operacji nie można cofnąć.`)) {
       return
     }
     setError(null)
@@ -149,7 +166,11 @@ export default function EntitySection({ title, fields, rows, cacheKey, create, u
       {/* Entities without a create callback (users today) only show the
           form while a row is being edited. */}
       {(create || editingId !== null) && (
-        <form onSubmit={handleSubmit} style={{ maxWidth: 480, display: 'grid', gap: '0.6rem' }}>
+        <form
+          ref={formRef}
+          onSubmit={handleSubmit}
+          style={{ maxWidth: 480, display: 'grid', gap: '0.6rem' }}
+        >
           <h3>{editingId === null ? 'Dodaj nowy wpis' : `Edytuj wpis #${editingId}`}</h3>
           {fields.map((field) => (
             <label key={field.key}>
@@ -230,9 +251,16 @@ export default function EntitySection({ title, fields, rows, cacheKey, create, u
                 </td>
               ))}
               <td style={tdStyle}>
-                <button type="button" className="btn btn-ghost" onClick={() => startEdit(row)}>
-                  Edytuj
-                </button>
+                {/* Rows the predicate rejects (e.g. own account) get no edit. */}
+                {isRowEditable === undefined || isRowEditable(Number(row.id)) ? (
+                  <button type="button" className="btn btn-ghost" onClick={() => startEdit(row)}>
+                    Edytuj
+                  </button>
+                ) : (
+                  <span className="muted" title="Własnego konta nie można edytować z tej listy">
+                    (Ty)
+                  </span>
+                )}
                 {remove && (
                   <button
                     type="button"

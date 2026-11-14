@@ -99,7 +99,7 @@ export default function App() {
         <Route path="messages" element={<MessagesPage user={user} />} />
         <Route path="materials" element={<PlaceholderPage title="Materiały" />} />
 
-        <Route path="admin/users" element={<AdminUsersPage />} />
+        <Route path="admin/users" element={<AdminUsersPage me={user} />} />
         <Route path="admin/structure" element={<AdminStructurePage />} />
         <Route path="admin/schedule" element={<AdminSchedulePage />} />
         <Route path="admin/statistics" element={<AdminStatisticsPage />} />

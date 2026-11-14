@@ -80,6 +80,10 @@ export default function StudentGradesPage() {
   return (
     <section>
       <h1>Moje oceny</h1>
+      <p className="muted">
+        Oceny w skali 0–100; średnia ważona liczona z wag kategorii (egzamin,
+        kolokwium, projekt, aktywność).
+      </p>
 
       {subjects.length === 0 && (
         <p className="muted">Nie masz jeszcze żadnych ocen.</p>
@@ -88,14 +92,25 @@ export default function StudentGradesPage() {
       {subjects.map((section) => (
         // open by default: the newest subject is what the student came for.
         <details key={section.key} className="card" open style={{ marginBottom: '1rem' }}>
-          <summary style={{ cursor: 'pointer' }}>
-            <strong>{section.subject}</strong>{' '}
+          {/* flex (not float) keeps the summary readable when the line wraps */}
+          <summary
+            style={{
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'baseline',
+              gap: '0.75rem',
+              flexWrap: 'wrap',
+            }}
+          >
+            <strong>{section.subject}</strong>
             <span className="muted">
               · {section.group} · {section.teacher}
             </span>
+            {/* flex pushes this average group to the right edge of the summary;
+                hidden when no numeric grades exist */}
             {section.average !== null && (
-              <span style={{ float: 'right' }}>
-                Średnia: <strong>{section.average.toFixed(2)}</strong>
+              <span style={{ marginLeft: 'auto', whiteSpace: 'nowrap' }}>
+                Średnia: <strong>{section.average.toFixed(2)} / 100</strong>
               </span>
             )}
           </summary>
