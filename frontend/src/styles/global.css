@@ -166,6 +166,15 @@ a:hover {
   white-space: nowrap;
 }
 
+/* phones: a wide gradebook (one column per category) cannot squeeze into
+   a narrow screen — the table keeps its natural width and scrolls sideways */
+@media (max-width: 720px) {
+  .data-table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
 /* --- grade editor (teacher gradebook cells) ------------------------------ */
 
 /* one inline-editable cell of the teacher's gradebook grid */
@@ -272,6 +281,21 @@ a:hover {
   cursor: copy;
 }
 
+/* phones: five readable day columns will not fit a narrow screen, so the
+   grid keeps a sensible minimum width and scrolls sideways instead
+   (overflow-x: auto overrides the hidden-x of .schedule; tiles stay
+   clipped vertically) */
+@media (max-width: 720px) {
+  .schedule {
+    overflow-x: auto;
+  }
+
+  .schedule-head,
+  .schedule-body {
+    min-width: 36rem;
+  }
+}
+
 /* one lesson tile; top/height/left/width are computed inline from its times */
 .schedule-slot {
   position: absolute;
@@ -371,6 +395,18 @@ a:hover {
   grid-column: span 2;
 }
 
+/* phones: the two-column slot form stacks into one column; span-2 becomes
+   "full row" (span 2 would force an implicit second column to exist) */
+@media (max-width: 720px) {
+  .schedule-form {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-form .span-2 {
+    grid-column: 1 / -1;
+  }
+}
+
 /* --- admin statistics dashboard ------------------------------------------- */
 
 /* responsive card grid: fills the row, cards never narrower than ~10rem */
@@ -418,6 +454,13 @@ a:hover {
   align-items: center;
   gap: 0.75rem;
   font-size: 0.85rem;
+}
+
+/* phones: label and value size to their content so the bar keeps room */
+@media (max-width: 720px) {
+  .stats-bar-row {
+    grid-template-columns: auto 1fr auto;
+  }
 }
 
 .stats-bar-track {
@@ -643,6 +686,13 @@ a:hover {
   padding: 1.5rem 1rem;
 }
 
+/* phones: tighter page padding */
+@media (max-width: 720px) {
+  .app-main {
+    padding: 1rem 0.75rem;
+  }
+}
+
 /* --- header -------------------------------------------------------------- */
 
 .app-header {
@@ -656,6 +706,14 @@ a:hover {
   justify-content: space-between;
   gap: 1rem;
   min-height: 60px;
+}
+
+/* phones: brand and user chip wrap into rows instead of overflowing */
+@media (max-width: 720px) {
+  .app-header-inner {
+    flex-wrap: wrap;
+    padding-block: 0.5rem;
+  }
 }
 
 .brand {

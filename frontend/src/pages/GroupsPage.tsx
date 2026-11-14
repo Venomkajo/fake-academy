@@ -36,7 +36,7 @@ export default function GroupsPage({ role }: Props) {
       <section>
         <h1>Grupy</h1>
         <p className="muted">
-          Grupami zarządza administrator w paneli „Struktura uczelni".
+          Grupami zarządza administrator w panelu „Struktura uczelni".
         </p>
       </section>
     )
