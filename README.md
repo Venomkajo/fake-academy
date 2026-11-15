@@ -72,24 +72,25 @@ cztery kontenery: `frontend`, `backend`, `db`, `storage`.
 ## Zakres systemu
 
 ### Dla studenta
-- wgląd we własne oceny (podział na przedmioty i kategorie, średnia
-  ważona) i asystent AI odpowiadający na pytania o te oceny,
+- wgląd we własne oceny (punkty 0–100, podział na przedmioty
+  i kategorie, średnia ważona) i asystent AI odpowiadający na pytania
+  o te oceny,
 - plan zajęć własnej grupy,
-- wiadomości do wykładowców i ogłoszenia grupowe,
+- czat z wykładowcami swoich przedmiotów,
 - pobieranie materiałów dydaktycznych,
-- anonimowe opinie o zajęciach (jedna opinia na temat zajęć),
-- podsumowania AI materiałów tekstowych.
+- anonimowe opinie o zajęciach (jedna opinia na temat zajęć).
 
 ### Dla wykładowcy
-- wystawianie ocen pojedynczo i masowo (cała grupa jednym formularzem),
-  edycja ocen z audytem zmian,
+- dziennik ocen: wystawianie i edycja ocen całej grupie w jednej tabeli
+  (wiersz na studenta, kolumna na kategorię),
 - kategorie ocen z wagami (egzamin, kolokwium, projekt, aktywność),
 - statystyki ocen grupy i eksport do CSV,
-- prowadzenie korespondencji i ogłoszeń,
-- udostępnianie materiałów,
+- czat ze studentami swoich grup,
+- ogłoszenia grupowe,
+- udostępnianie materiałów (pliki do 20 MB),
 - przeglądanie anonimowych opinii o własnych zajęciach — wyłącznie
-  treść, temat i data, bez jakichkolwiek danych autora,
-- podsumowania AI ocen, opinii i wiadomości.
+  treść, temat i data,
+- audyt zmian ocen (planowane: kto, kiedy, stara → nowa wartość).
 
 ### Dla administratora
 - zarządzanie kontami i rolami (dezaktywacja zamiast usuwania),
@@ -98,15 +99,19 @@ cztery kontenery: `frontend`, `backend`, `db`, `storage`.
 - statystyki systemowe.
 
 ### Wspólne
-- logowanie z tokenami JWT,
-- powiadomienia in-app o ocenach, wiadomościach i zmianach planu.
+- logowanie z tokenem JWT,
+- pulpit startowy,
+- przegląd grup (student: własne, wykładowca: prowadzone),
+- powiadomienia in-app o ocenach, wiadomościach i zmianach planu,
+- panel podsumowań AI (materiały, oceny, opinie, wiadomości).
 
 ## Karty funkcji
 
 Każda funkcja z sekcji [Zakres systemu](#zakres-systemu) ma poniżej własną
 kartę według szablonu: **Co robi użytkownik / Widok / Dane / Najtrudniejsze /
-Gotowe, gdy**. Właścicielem wszystkich funkcji jest autor projektu (projekt
-solo).
+Gotowe, gdy** — z dodatkowymi polami (skala, mobile, limity, blokady) tam,
+gdzie uszczegóławiają kryteria. Właścicielem wszystkich funkcji jest autor
+projektu (projekt solo).
 
 Ścieżki w polu *Widok* odnoszą się do docelowych tras w `App.tsx`;
 adresy URL są angielskie, a etykiety widoczne
@@ -121,6 +126,10 @@ w interfejsie pozostają polskie.
   aktywność); przy każdym przedmiocie widzi średnią ważoną. Może też
   zapytać asystenta AI o własne oceny — np. o średnią z przedmiotu albo
   o to, jaki wynik z egzaminu zapewni mu ocenę docelową.
+- **Skala:** oceny to punkty 0–100 (kategorie zaliczeniowe mają zamiast
+  punktów symbol ZAL/NZAL). Średnia ważona to też punkty — np. „87.50”,
+  bez jednostki; kategorie ZAL/NZAL nie wchodzą do średniej. System
+  nie przelicza punktów na ocenę 2–5 — taka skala w nim nie istnieje.
 - **Widok:** `/grades` — strona studenta (`GradesPage`); przedmioty jako
   rozwijane sekcje z kategoriami i średnią oraz panel „Zapytaj AI o oceny”
   (pole pytania → odpowiedź, historia pytań z bieżącej sesji).
@@ -128,13 +137,14 @@ w interfejsie pozostają polskie.
   średnia ważona liczona z wag kategorii. Pytania do AI idą przez
   `POST /ai/grades-qa` — backend przekazuje modelowi wyłącznie oceny
   pytającego studenta jako kontekst odpowiedzi.
-- **Najtrudniejsze:** poprawność średniej ważonej przy kategoriach bez ocen
-  i ocenach cząstkowych; grounding asystenta AI — odpowiedzi muszą
-  wynikać wyłącznie z rzeczywistych ocen studenta; czytelne pogrupowanie dużej liczby wpisów.
+- **Najtrudniejsze:** poprawność średniej ważonej — Σ(ocena × waga) /
+  Σ(waga) po kategoriach z punktami, więc kategorie bez ocen i same
+  ZAL/NZAL nie zniekształcają wyniku; grounding asystenta AI (odpowiedzi
+  wyłącznie z rzeczywistych ocen studenta); czytelne pogrupowanie dużej
+  liczby wpisów.
 - **Gotowe, gdy:** student widzi wszystkie oceny pogrupowane wg przedmiotu
-  i kategorii, średnia zgadza się z obliczeniem ręcznym, a brak ocen
-  pokazuje sensowny stan pusty; odpowiedź AI jest zgodna z widocznymi
-  danymi (np. podana średnia = średnia na ekranie).
+  i kategorii, średnia zgadza się z obliczeniem ręcznym, brak ocen pokazuje
+  sensowny stan pusty, a odpowiedź AI jest zgodna z widocznymi danymi.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 ### S2 · Plan zajęć własnej grupy
@@ -142,28 +152,42 @@ w interfejsie pozostają polskie.
 - **Co robi użytkownik:** Student przegląda tygodniowy plan zajęć swojej
   grupy (przedmiot, sala, godziny, wykładowca) i może zmieniać tydzień.
 - **Widok:** `/schedule` — siatka tygodnia (`SchedulePage`), dni jako kolumny,
-  sloty jako kafelki; nawigacja poprzedni/następny tydzień.
-- **Dane:** `GET /schedule/me` → encje `lesson_slot`, `lesson_topic`,
-  `subject`, `student_group`; widoczne wyłącznie sloty grup studenta.
-- **Najtrudniejsze:** responsywny layout siatki i poprawne pozycjonowanie slotów w czasie.
+  sloty jako kafelki; nawigacja poprzedni/następny/bieżący tydzień.
+- **Dane:** `GET /schedule/me` → encje `lesson_slot`, `subject`,
+  `student_group` (przez `teaching_assignment`); widoczne wyłącznie sloty
+  grup studenta. Sloty są cykliczne (bez dat), więc zmiana tygodnia
+  przełącza tylko daty w nagłówkach kolumn.
+- **Mobile:** do ok. 720 px pełna siatka pięciu kolumn; poniżej siatka
+  zachowuje minimalną szerokość i przewija się w poziomie, a nagłówek
+  zawija się w wiersze.
+- **Pusty stan:** grupa bez zajęć pokazuje komunikat „Twoje grupy nie mają
+  jeszcze żadnych zajęć w planie” zamiast pustej siatki.
+- **Najtrudniejsze:** poprawne pozycjonowanie slotów w czasie (kafelki
+  zajęć nakładających się w jednym dniu dzielą szerokość kolumny).
 - **Gotowe, gdy:** plan pokazuje wyłącznie zajęcia grup studenta, nawigacja
-  tygodniami działa, a slot zawiera przedmiot, salę i godziny.
+  tygodniami działa, slot zawiera przedmiot, salę i godziny, na telefonie
+  plan da się przewinąć w poziomie, a tydzień bez zajęć kończy się
+  czytelnym komunikatem.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
-### S3 · Wiadomości do wykładowców i ogłoszenia grupowe
+### S3 · Czat z wykładowcami
 
-- **Co robi użytkownik:** Student wysyła wiadomości do wykładowców swoich
-  przedmiotów, czyta wątki oraz ogłoszenia grupowe; widzi, które pozycje
+- **Co robi użytkownik:** Student wysyła wiadomości do wykładowców
+  przedmiotów, które uczęszcza, i czyta wątki; widzi, które pozycje
   są nieprzeczytane.
-- **Widok:** `/messages` — lista wątków + panel rozmowy; osobna zakładka
-  ogłoszeń; licznik nieprzeczytanych w nawigacji.
-- **Dane:** `GET/POST /messages` → encje `message`, `message_read_status`;
-  odbiorcy ograniczeni do wykładowców studenta.
-- **Najtrudniejsze:** utrzymanie spójnego stanu przeczytane/nieprzeczytane
-  (synchronizacja licznika po wysłaniu/odczycie).
-- **Gotowe, gdy:** student wyśle wiadomość do wykładowcy, zobaczy ją
-  w wątku, ogłoszenia grupowe dotrą do wszystkich członków grupy,
-  a licznik nieprzeczytanych jest aktualny.
+- **Widok:** `/messages` — zakładka „Rozmowy”: lista wątków z licznikami
+  nieprzeczytanych + panel rozmowy z formularzem odpowiedzi; licznik
+  nieprzeczytanych w nawigacji.
+- **Dane:** `GET/POST /messages`, `POST /messages/{id}/read` → encje
+  `message`, `message_read_status`; odbiorcy ograniczeni do wykładowców
+  przedmiotów studenta.
+- **Najtrudniejsze:** spójność stanu przeczytane/nieprzeczytane —
+  otwarcie wątku, wysłanie i odpowiedź unieważniają wspólną pamięć
+  `['messages']` (TanStack Query), więc lista i licznik w nawigacji
+  odświeżają się bez przeładowania strony.
+- **Gotowe, gdy:** student wyśle wiadomość do wykładowcy i zobaczy ją
+  w wątku, odpowiedź wykładowcy dojdzie do tego samego wątku, a licznik
+  nieprzeczytanych zgadza się z listą wątków.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 ### S4 · Pobieranie materiałów dydaktycznych
@@ -174,75 +198,71 @@ w interfejsie pozostają polskie.
   i przyciskiem pobrania.
 - **Dane:** `GET /materials` → encja `material` (metadane) + podpisany URL
   pobierania z SeaweedFS wydawany przez backend.
-- **Najtrudniejsze:** pobieranie przez podpisane adresy URL tak, by
-  przeglądarka zapisała plik, i poprawna obsługa dużych plików.
-- **Gotowe, gdy:** student filtruje listę wg przedmiotu, a pobrany plik
-  otwiera się poprawnie lokalnie; niedostępny materiał pokazuje błąd.
+- **Limity:** limit wielkości plików 20 MB — próba wgrania większego kończy się komunikatem
+  o limicie
+- **Najtrudniejsze:** pobieranie przez podpisany adres URL tak, by
+  przeglądarka zapisała plik, oraz czytelny błąd, gdy materiał
+  jest niedostępny (np. plik usunięty w magazynie).
+- **Gotowe, gdy:** student filtruje listę wg przedmiotu, pobrany plik
+  otwiera się poprawnie lokalnie, a niedostępny materiał pokazuje
+  komunikat błędu.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 ### S5 · Anonimowe opinie o zajęciach (jedna na temat)
 
 - **Co robi użytkownik:** Student wystawia anonimową opinię o konkretnym
-  temacie zajęć; może sprawdzić, o które tematy już się wypowiedział,
-  i nie może wystawić drugiej opinii do tego samego tematu.
-- **Widok:** `/feedback` — lista tematów zajęć studenta z formularzem opinii
-  i wyraźną informacją o anonimowości.
+  temacie zajęć; nie może wystawić drugiej opinii do tego samego tematu.
+- **Widok:** `/feedback` — lista tematów zajęć studenta z formularzem
+  opinii i wyraźną informacją o anonimowości; przy każdym temacie widać,
+  czy student już się wypowiedział.
 - **Dane:** `POST /feedback` → encje `feedback`, `lesson_topic`;
   unikalność (student, temat) pilnowana po stronie backendu.
-- **Najtrudniejsze:** wiarygodna anonimowość — komunikacja UX (jasny
-  komunikat, że wykładowca nie zobaczy autora) oraz obsługa próby
-  powtórnej opinii bez ujawniania, kto próbował.
-- **Gotowe, gdy:** student wystawia maksymalnie jedną opinię na temat,
+- **Najtrudniejsze:** wiarygodna anonimowość — jasny komunikat, że
+  wykładowca nie zobaczy autora, oraz obsługa próby powtórnej opinii
+  bez ujawniania, kto próbował.
+- **Gotowe, gdy:** student widzi na liście stan „opinia już wystawiona”,
   powtórna próba kończy się czytelnym komunikatem, a odpowiedź API
   nie zawiera żadnych danych autora.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
-### S6 · Podsumowania AI materiałów tekstowych
-
-- **Co robi użytkownik:** Student klikając „Podsumuj" przy materiale
-  tekstowym otrzymuje zwięzłe podsumowanie treści wygenerowane przez AI.
-- **Widok:** `/materials` — przycisk „Podsumuj AI" przy materiale
-  i panel z podsumowaniem (stan ładowania / wynik / błąd).
-- **Dane:** treść materiału → backend → zewnętrzne API zgodne ze schematem
-  OpenAI → zwrócone i cache'owane podsumowanie.
-- **Najtrudniejsze:** UX długotrwałego zapytania (skeleton/spinner,
-  timeout) i obsługa błędu przy niedostępności lub limicie API.
-- **Gotowe, gdy:** podsumowanie pojawia się w rozsądnym czasie, wynik
-  odnosi się do faktycznej treści materiału, a awaria API pokazuje
-  zrozumiały błąd bez psucia strony.
-- **Właściciel:** Kajetan Respondek (@Venomkajo)
-
 **Dla wykładowcy**
 
-### W1 · Wystawianie ocen pojedynczo i masowo (z audytem zmian)
+### W1 · Dziennik ocen — wystawianie i edycja w jednym miejscu
 
-- **Co robi użytkownik:** Wykładowca wystawia ocenę pojedynczemu studentowi
-  albo całej grupie jednym formularzem (wiersz na studenta), a także
-  edytuje istniejące oceny, zapisywane do audytu.
-- **Widok:** `/grades` (rola wykładowcy) — wybór przedmiotu/grupy, tryb
-  pojedynczy i tryb masowy; historia zmian oceny w panelu szczegółów.
-- **Dane:** `POST /grades`, `POST /grades/bulk`, `PATCH /grades/{id}` →
-  encja `grade` + zapis audytu (kto, kiedy, stara → nowa wartość).
-- **Najtrudniejsze:** formularz masowy — walidacja per wiersz, czytelne pokazanie historii
-  zmian (audyt) na froncie.
-- **Gotowe, gdy:** wykładowca wystawi oceny całej grupie jednym
-  formularzem, edycja oceny zapisze wpis w audycie i historia jest
-  jasno widoczna.
+- **Co robi użytkownik:** Wykładowca wybiera przypisanie (przedmiot ×
+  grupa) i wystawia lub edytuje oceny w dzienniku: wiersz na studenta,
+  kolumna na kategorię; wpisanie wartości i Enter zapisuje komórkę
+  (POST przy pustej, PATCH przy istniejącej).
+- **Widok:** `/grades` (rola wykładowcy) — wybór przypisania jako przyciski,
+  panel kategorii i tabela dziennika z edytowalnymi komórkami.
+- **Dane:** `GET /grades/teaching`, `GET /grades/assignment/{id}/sheet`,
+  `POST /grades`, `PATCH /grades/{id}` → encje `grade`, `grade_category`.
+- **Najtrudniejsze:** walidacja komórki (liczba 0–100 z „,” lub „.”
+  jako separatorem albo ZAL/NZAL) i zapis bez przeładowania;
+  konflikt (ocena już istnieje) pokazuje błąd pod komórką.
+- **Gotowe, gdy:** wykładowca wystawi oceny wszystkim studentom grupy
+  w jednej tabeli, edycja istniejącej oceny zapisuje się od razu,
+  a niepoprawna wartość pokazuje błąd pod komórką.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 ### W2 · Kategorie ocen z wagami
 
-- **Co robi użytkownik:** Wykładowca definiuje dla przedmiotu kategorie
+- **Co robi użytkownik:** Wykładowca definiuje dla przypisania kategorie
   ocen (egzamin, kolokwium, projekt, aktywność) wraz z wagami wpływającymi
-  na średnią ważoną studentów.
-- **Widok:** `/grades/categories` — panel wykładowcy z listą kategorii
-  i formularzem dodawania/edycji (nazwa + waga).
-- **Dane:** `GET/POST/PATCH/DELETE /grade-categories` → encja
-  `grade_category` (nazwa, waga, przypisanie do przedmiotu).
-- **Najtrudniejsze:** implementacja średniej ważonej w backendzie i natychmiastowa aktualizacja
-  średniej u studentów po zmianie wagi kategorii.
-- **Gotowe, gdy:** wykładowca zarządza kategoriami przedmiotu, a zmiana
-  wagi natychmiast wpływa na średnią ważoną widoczną u studenta.
+  na średnią ważoną studentów; kategorie bez ocen może usuwać.
+- **Widok:** panel kategorii w `/grades` (rola wykładowcy) — lista kategorii
+  wybranego przypisania i formularz dodawania (nazwa + waga).
+- **Dane:** kategorie w odpowiedzi `GET /grades/teaching`,
+  `POST /grades/categories`, `DELETE /grades/categories/{id}` → encja
+  `grade_category` (nazwa, waga, przypisanie).
+- **Reguła wag:** waga to procentowy udział kategorii w średniej ważonej;
+  suma wag nie musi wynosić 100 (średnia dzieli przez sumę wag kategorii
+  z ocenami), ale 100% jest wartością zalecaną.
+- **Najtrudniejsze:** spójność — kategoria z ocenami jest nietykalna
+  (usuwanie zwraca 409), a średnie studentów liczą się z aktualnych wag.
+- **Gotowe, gdy:** wykładowca dodaje kategorię z wagą i od razu widzi ją
+  w dzienniku, próba usunięcia kategorii z ocenami kończy się blokadą,
+  a zmiana wagi zmienia średnie studentów.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 ### W3 · Statystyki ocen grupy i eksport do CSV
@@ -251,44 +271,69 @@ w interfejsie pozostają polskie.
   (średnia, rozkład ocen, wyniki per kategoria) i pobiera je jako plik CSV.
 - **Widok:** `/statistics` — wybór przedmiotu/grupy, karty/podsumowania
   liczbowe, przycisk „Eksportuj CSV".
-- **Dane:** agregacje z encji `grade`/`grade_category` (backend lub obliczenia
-  po stronie frontendu); CSV generowane z polskimi znakami (UTF-8 BOM).
+- **Dane:** agregacje liczone na froncie z istniejącego arkusza
+  `GET /grades/assignment/{id}/sheet` (encje `grade`/`grade_category`);
+  CSV generowane z polskimi znakami (UTF-8 BOM).
 - **Najtrudniejsze:** poprawna agregacja w podziale na kategorie
-  i uczciwa obsługa pustych zbiorów; CSV otwierany poprawnie w Excelu.
+  i uczciwa obsługa pustych zbiorów (komunikat zamiast zer);
+  CSV otwierane poprawnie w Excelu.
 - **Gotowe, gdy:** statystyki zgadzają się z danymi na liście ocen,
   a pobrany CSV otwiera się w Excelu z poprawnymi polskimi znakami.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
-### W4 · Korespondencja i ogłoszenia
-
-- **Co robi użytkownik:** Wykładowca odpowiada na wiadomości studentów
-  oraz publikuje ogłoszenia — do całej grupy lub wybranych studentów.
-- **Widok:** `/messages` (rola wykładowcy) — lista wątków, panel rozmowy
-  i kreator ogłoszenia z wyborem odbiorców.
-- **Dane:** `GET/POST /messages` → encja `message` (typ: prywatna/ogłoszenie,
-  nadawca, odbiorcy); wybór odbiorców ograniczony do grup wykładowcy.
-- **Najtrudniejsze:** selektor odbiorców (tylko grupy przypisane
-  wykładowcy — `teaching_assignment`) i spójność stanu przeczytania
-  po obu stronach rozmowy.
-- **Gotowe, gdy:** wykładowca odpowie na wiadomość studenta i opublikuje
-  ogłoszenie grupowe, a studenci tej grupy zobaczą oba w swoich widokach.
+### W4 · Czat ze studentami
+ 
+- **Co robi użytkownik:** Wykładowca czyta wątki ze studentami swoich grup
+  i odpowiada na ich wiadomości.
+- **Widok:** `/messages` (rola wykładowcy) — zakładka „Rozmowy”: lista wątków
+  + panel rozmowy z odpowiedzią; licznik nieprzeczytanych w nawigacji.
+- **Dane:** `GET/POST /messages`, `POST /messages/{id}/read` → encje
+  `message`, `message_read_status`; kontakty ograniczone do studentów
+  grup wykładowcy (`teaching_assignment`).
+- **Najtrudniejsze:** spójność stanu przeczytania po obu stronach rozmowy
+  (wspólna pamięć `['messages']` jak w S3).
+- **Gotowe, gdy:** wykładowca odpowie na wiadomość studenta, student
+  zobaczy odpowiedź w tym samym wątku, a liczniki nieprzeczytanych
+  zgadzają się po obu stronach.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
-### W5 · Udostępnianie materiałów
+### W5 · Ogłoszenia grupowe
 
-- **Co robi użytkownik:** Wykładowca wgrywa pliki dla swoich przedmiotów,
-  nadaje im opis i może je usuwać; studenci grupy widzą je od razu.
+- **Co robi użytkownik:** Wykładowca publikuje ogłoszenie do wybranej
+  grupy — z tytułem i treścią; ogłoszenie trafia do wszystkich studentów
+  grupy, a otwarcie oznacza je jako przeczytane.
+- **Widok:** `/messages` (rola wykładowcy) — zakładka „Ogłoszenia”
+  z kreatorem (grupa, tytuł, treść) i listą opublikowanych; studenci
+  widzą je w tej samej zakładce u siebie.
+- **Dane:** `GET/POST /messages` → encja `message` (typ: ogłoszenie,
+  nadawca, grupa); wybór grupy ograniczony do grup wykładowcy
+  (`teaching_assignment`).
+- **Najtrudniejsze:** skierowanie ogłoszenia tylko do właściwej grupy
+  (backend weryfikuje grupę) i spójność liczników nieprzeczytanych
+  u wszystkich odbiorców.
+- **Gotowe, gdy:** wykładowca opublikuje ogłoszenie grupowe, każdy student
+  grupy je zobaczy, a otwarcie ogłoszenia zdejmie je z licznika
+  nieprzeczytanych.
+- **Właściciel:** Kajetan Respondek (@Venomkajo)
+
+### W6 · Udostępnianie materiałów
+
+- **Co robi użytkownik:** Wykładowca wgrywa pliki dla przedmiotów
+  swoich przypisań i może je usuwać; studenci grupy widzą je od razu.
 - **Widok:** `/materials` (rola wykładowcy) — formularz wgrywania
-  (przedmiot, opis, plik) i lista własnych materiałów z akcjami.
+  (przedmiot, plik) i lista własnych materiałów z akcjami.
 - **Dane:** upload multipart → backend → SeaweedFS; metadane w encji
   `material` (przedmiot, autor, nazwa, rozmiar, data).
-- **Najtrudniejsze:** pasek postępu i obsługa błędów przy dużych plikach
-  oraz usuwanie (plik w SeaweedFS + wpis w bazie muszą zniknąć razem).
+- **Limity:** plik do 20 MB — próba wgrania większego kończy się
+  komunikatem o limicie (walidowane przed wysłaniem i na backendzie).
+- **Najtrudniejsze:** usuwanie (plik w SeaweedFS + wpis w bazie muszą
+  zniknąć razem) i obsługa błędu uploadu bez utraty formularza.
 - **Gotowe, gdy:** wgrany plik jest widoczny i pobieralny dla studentów
-  grupy, a jego usunięcie znika i z listy, i z magazynu.
+  grupy, plik ponad 20 MB kończy się komunikatem o limicie, a usunięcie
+  znika i z listy, i z magazynu.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
-### W6 · Przeglądanie anonimowych opinii o własnych zajęciach
+### W7 · Przeglądanie anonimowych opinii o własnych zajęciach
 
 - **Co robi użytkownik:** Wykładowca przegląda opinie studentów o swoich
   zajęciach — wyłącznie treść, temat i datę; nie widzi i nie może ustalić
@@ -301,43 +346,66 @@ w interfejsie pozostają polskie.
   nie może zawierać pól autora ani identyfikatorów pozwalających
   wnioskować o osobie; UI nie może sugerować autorstwa.
 - **Gotowe, gdy:** wykładowca widzi wyłącznie treść, temat i datę;
-  w odpowiedzi API nie ma żadnych danych
-  autora, a opinie dotyczą tylko jego zajęć.
+  w odpowiedzi API nie ma żadnych danych autora, a opinie dotyczą
+  tylko jego zajęć.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
-### W7 · Podsumowania AI ocen, opinii i wiadomości
+### W8 · Audyt zmian ocen
 
-- **Co robi użytkownik:** Wykładowca klika „Podsumuj AI" przy ocenach
-  grupy, opiniach lub wątku wiadomości i otrzymuje zwięzłe podsumowanie
-  redukujące przeciążenie informacyjne.
-- **Widok:** `/statistics`, `/feedback`, `/messages` — przycisk „Podsumuj
-  AI" i wspólny panel podsumowania (ładowanie / wynik / błąd).
-- **Dane:** zagregowany tekst (oceny/feedback/wiadomości) → backend →
-  zewnętrzne API zgodne ze schematem OpenAI → cache podsumowania.
-- **Najtrudniejsze:** konstrukcja promptów dla trzech różnych typów
-  danych, limity długości wejścia i kontrola kosztów/cache przy danych,
+- **Co robi użytkownik:** Wykładowca przegląda historię zmian oceny —
+  kto, kiedy, jaka wartość poprzednia i nowa.
+- **Widok:** panel szczegółów oceny w `/grades` (rola wykładowcy).
+- **Dane:** encja `grade_audit` (planowana migracja) zapisywana przy
+  `POST /grades` i `PATCH /grades/{id}`.
+- **Najtrudniejsze:** odróżnienie wystawienia od edycji w historii
+  i czytelne pokazanie „stara → nowa wartość" na froncie.
+- **Gotowe, gdy:** edycja oceny zapisuje wpis w audycie, a historia zmian
+  jest jasno widoczna w panelu oceny.
+- **Właściciel:** Kajetan Respondek (@Venomkajo)
+
+### W9 · Panel podsumowań AI
+
+- **Co robi użytkownik:** Student klika „Podsumuj AI" przy materiale
+  tekstowym; wykładowca — przy ocenach grupy, opiniach o zajęciach
+  i wątku wiadomości. Otrzymuje zwięzłe podsumowanie redukujące
+  przeciążenie informacyjne.
+- **Widok:** wspólny panel podsumowania przy `/materials`,
+  `/statistics`, `/feedback`, `/messages` — przycisk wywołuje,
+  panel pokazuje ładowanie / wynik / błąd (wspólny komponent
+  we wszystkich widokach).
+- **Dane:** treść (materiał / oceny / opinie / wiadomości) → backend →
+  zewnętrzne API zgodne ze schematem OpenAI (`AI_API_BASE_URL`,
+  `AI_MODEL`) → zwrócone i cache'owane podsumowanie; pytania o oceny
+  studenta przez `POST /ai/grades-qa` (S1).
+- **Najtrudniejsze:** konstrukcja promptów dla różnych typów danych,
+  limity długości wejścia i kontrola kosztów/cache przy danych,
   które zmieniają się w czasie.
-- **Gotowe, gdy:** podsumowanie każdego z trzech typów danych jest
-  zgodne z treścią źródłową, generuje się z widocznym stanem ładowania,
-  a błąd API nie blokuje pozostałych funkcji widoku.
+- **Gotowe, gdy:** podsumowanie każdego typu danych jest zgodne
+  z treścią źródłową, generuje się z widocznym stanem ładowania,
+  a błąd API jest czytelnie komunikowany.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 **Dla administratora**
 
 ### A1 · Zarządzanie kontami i rolami
 
-- **Co robi użytkownik:** Administrator przegląda listę kont, zmienia role
+- **Co robi użytkownik:** Administrator przegląda listę kont
+  z wyszukiwaniem (fragment imienia, nazwiska lub e-maila) i filtrem
+  roli, edytuje dane (imię, nazwisko, e-mail), zmienia role
   (student/wykładowca/admin) i dezaktywuje konta zamiast je usuwać.
-- **Widok:** `/admin/users` — tabela z filtrowaniem i wyszukiwaniem,
-  formularz utworzenia konta, akcje zmiany roli/dezaktywacji.
-- **Dane:** `GET/POST/PATCH /admin/users` → encja `user` (rola, `is_active`);
+- **Widok:** `/admin/users` — tabela z inline edycją (Edytuj ładuje
+  wiersz do formularza) + wyszukiwarka i filtr roli nad tabelą.
+- **Dane:** `GET/PATCH /admin/users` → encja `user` (rola, `is_active`);
   dezaktywacja zamiast DELETE (ochrona powiązań w bazie).
+- **Blokady:** administrator nie może zmienić własnej roli ani
+  dezaktywować własnego konta.
 - **Najtrudniejsze:** bezpieczeństwo — brak twardych usunięć (klucze
-  obce w ocenach/wiadomościach), potwierdzenia przy zmianie roli
-  i dezaktywacji własnego konta.
-- **Gotowe, gdy:** administrator utworzy konto, zmieni rolę i dezaktywuje
-  konto; zdezaktywowany użytkownik nie może się zalogować, a jego
-  historyczne dane pozostają w systemie.
+  obce w ocenach/wiadomościach) i blokada samozmiany roli
+  i samodezaktywacji.
+- **Gotowe, gdy:** administrator zmieni rolę i dezaktywuje konto,
+  zdezaktywowany użytkownik nie może się zalogować (403), jego dane
+  historyczne zostają w systemie, a próba zmiany własnej roli lub
+  dezaktywacji własnego konta kończy się odmową.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 ### A2 · Struktura uczelni (kierunki, grupy, przedmioty, przypisania)
@@ -391,22 +459,23 @@ w interfejsie pozostają polskie.
 
 **Wspólne (wszyscy)**
 
-### C1 · Logowanie z tokenami JWT
+### C1 · Logowanie z tokenem JWT
 
 - **Co robi użytkownik:** Użytkownik dowolnej roli loguje się e-mailem
-  i hasłem, a system po weryfikacji przenosi go do widoku właściwego
-  dla jego roli; sesja przeżywa odświeżenie strony.
-- **Widok:** `/login`; chronione
-  trasy w `App.tsx` — brak sesji odsyła do logowania.
-- **Dane:** `POST /auth/login` → access token + refresh token (encje
-  `refresh_token`); automatyczne odświeżenie access tokena i `POST /auth/logout`
-  unieważniający sesję.
-- **Najtrudniejsze:** poprawny cykl życia tokenów (odświeżanie bez
-  nieskończonej pętli, logout czyszczący stan Axios/TanStack Query) oraz
-  przeadresowanie po roli po zalogowaniu.
-- **Gotowe, gdy:** logowanie działa dla wszystkich trzech ról z przekierowaniem
-  do właściwego widoku, błędne dane pokazują komunikat, odświeżenie strony
-  nie wylogowuje, a wylogowanie blokuje powrót przez wstecz/odnośnik.
+  i hasłem; po weryfikacji trafia na pulpit (`/`), a sesja przeżywa
+  odświeżenie strony.
+- **Widok:** `/login` — formularz e-mail + hasło; wszystkie trasy
+  w `App.tsx` są chronione: brak sesji pokazuje login zamiast strony.
+- **Dane:** `POST /auth/login` → access token (JWT, domyślnie 60 min)
+  przechowywany w localStorage; `GET /auth/me` sprawdza token po starcie
+  aplikacji; wygasły token (401) jest usuwany przez interceptor Axiosa,
+  który przeładowuje aplikację do loginu.
+- **Najtrudniejsze:** cykl życia tokena bez nieskończonej pętli
+  (interceptor reaguje tylko na 401 z wysłanym tokenem) oraz jeden
+  wspólny komunikat i czas odpowiedzi dla złego e-maila i hasła.
+- **Gotowe, gdy:** logowanie działa dla wszystkich trzech ról, błędne
+  dane pokazują komunikat, odświeżenie strony nie wylogowuje,
+  a po wylogowaniu powrót wstecz pokazuje login.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 ### C2 · Powiadomienia in-app
@@ -426,6 +495,37 @@ w interfejsie pozostają polskie.
   generują powiadomienie widoczne bez przeładowania strony, licznik
   nieprzeczytanych jest zgodny na wszystkich widokach, a oznaczenie
   przeczytanym trwale je ukrywa z licznika.
+- **Właściciel:** Kajetan Respondek (@Venomkajo)
+
+### C3 · Pulpit startowy
+
+- **Co robi użytkownik:** Po zalogowaniu użytkownik dowolnej roli widzi
+  pulpit z powitaniem — pierwszy ekran aplikacji.
+- **Widok:** `/` (`DashboardPage`) — powitanie, e-mail i rola
+  zalogowanego użytkownika; placeholder docelowego pulpitu
+  (ogłoszenia, ostatnie oceny, najbliższe zajęcia).
+- **Dane:** `GET /auth/me` → encja `user`; bez własnych zapytań.
+- **Najtrudniejsze:** docelowo zróżnicowanie treści wg roli bez
+  pisania tego samego layoutu trzykrotnie.
+- **Gotowe, gdy:** każdy zalogowany użytkownik po wejściu na `/`
+  widzi swoje dane i może przejść do dalszych sekcji z nawigacji.
+- **Właściciel:** Kajetan Respondek (@Venomkajo)
+
+### C4 · Przegląd grup
+
+- **Co robi użytkownik:** Student widzi grupy, do których należy (nazwa,
+  kierunek, liczba członków); wykładowca — grupy, które prowadzi,
+  po jednym wierszu na przypisanie (przedmiot × grupa × kierunek).
+- **Widok:** `/groups` (`GroupsPage`) — tabela `data-table`;
+  administrator widzi notkę odsyłającą do „Struktury uczelni”.
+- **Dane:** `GET /groups/me` (student), `GET /groups/teaching`
+  (wykładowca) → encje `student_group`, `field_of_study`,
+  `teaching_assignment`.
+- **Najtrudniejsze:** uruchomienie tylko właściwego zapytania dla roli
+  (TanStack `enabled`), by wykładowca nie wywołał końcówki studenta.
+- **Gotowe, gdy:** student widzi swoje grupy z liczbą członków,
+  wykładowca swoje przypisania, a pusta lista pokazuje komunikat
+  o braku grup.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 # Autorzy:
