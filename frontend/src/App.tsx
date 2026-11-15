@@ -12,8 +12,9 @@
 // After login the URL decides what renders inside the shared Layout.
 // <Routes> is only reachable when `user` is set, so every route below
 // is implicitly protected — you cannot deep-link into the app logged
-// out. If individual guards are ever needed, move the gate into a
-// <RequireAuth> wrapper route instead of relying on this single check.
+// out. Role-specific subtrees (the /admin/* pages) additionally go
+// through <RequireRole>, which renders an explicit 403 note for wrong
+// roles instead of letting the page fire raw 403s from the API.
 
 import { useEffect } from 'react'
 import { Route, Routes } from 'react-router-dom'
@@ -21,6 +22,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { clearToken, fetchCurrentUser, hasToken, type UserPublic } from './api/auth'
 
+import RequireRole from './components/common/RequireRole'
 import Layout from './components/layout/Layout'
 import DashboardPage from './pages/DashboardPage'
 import GradesPage from './pages/GradesPage'
@@ -91,18 +93,18 @@ export default function App() {
         {/* index = the "/" route (no path of its own) */}
         <Route index element={<DashboardPage user={user} />} />
 
-        {/* Real pages — one role-aware component per area; URL paths stay
-            English/ASCII, page titles stay Polish (see Navbar for the links). */}
         <Route path="grades" element={<GradesPage role={user.role} />} />
         <Route path="groups" element={<GroupsPage role={user.role} />} />
         <Route path="schedule" element={<SchedulePage role={user.role} />} />
         <Route path="messages" element={<MessagesPage user={user} />} />
         <Route path="materials" element={<PlaceholderPage title="Materiały" />} />
 
-        <Route path="admin/users" element={<AdminUsersPage me={user} />} />
-        <Route path="admin/structure" element={<AdminStructurePage />} />
-        <Route path="admin/schedule" element={<AdminSchedulePage />} />
-        <Route path="admin/statistics" element={<AdminStatisticsPage />} />
+        <Route element={<RequireRole roles={['admin']} user={user} />}>
+          <Route path="admin/users" element={<AdminUsersPage me={user} />} />
+          <Route path="admin/structure" element={<AdminStructurePage />} />
+          <Route path="admin/schedule" element={<AdminSchedulePage />} />
+          <Route path="admin/statistics" element={<AdminStatisticsPage />} />
+        </Route>
 
         {/* Nothing matched the URL -> 404 instead of a blank page. */}
         <Route path="*" element={<PlaceholderPage title="404 — nie znaleziono strony" />} />
