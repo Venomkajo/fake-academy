@@ -427,34 +427,21 @@ w interfejsie pozostają polskie.
 
 ### A3 · Plan zajęć (sloty, sale)
 
-- **Co robi użytkownik:** Administrator układa plan zajęć: dodaje sloty
-  (przedmiot, grupa, wykładowca, sala, dzień i godzina) oraz tematy zajęć,
-  do których studenci mogą wystawiać opinie.
-- **Widok:** `/admin/schedule` — edytor slotów na siatce tygodnia (podobnej
-  do widoku studenckiego, ale z akcjami dodaj/edytuj/usuń) + zarządzanie
-  tematami zajęć.
-- **Dane:** `GET/POST/PATCH/DELETE /admin/lesson-slots` → encje
-  `lesson_slot` (sala, czas, grupa, przedmiot), `lesson_topic`.
-- **Najtrudniejsze:** walidacja kolizji — jedna sala, jedna grupa
-  i jeden wykładowca nie mogą mieć dwóch zajęć w tym samym czasie;
-  czytelne komunikaty konfliktów.
-- **Gotowe, gdy:** administrator doda slot, próba nałożenia slotów
-  w tej samej sali/grupie/wykładowcy w jednym czasie zostanie odrzucona
-  z jasnym błędem, a slot pojawi się w planach studentów i wykładowców.
+- **Co robi użytkownik:** Administrator układa tygodniowy plan zajęć: dodaje sloty (przypisanie przedmiot × wykładowca × grupa, dzień, godziny, sala), edytuje je i usuwa, a filtrem zawęża siatkę do jednego wykładowcy lub jednej grupy.
+- **Widok:** `/admin/schedule` — siatka całej uczelni (`WeekGrid` w trybie admina): kliknięcie slotu ładuje go do formularza, kliknięcie pustego pola wypełnia w formularzu dzień i godzinę nowego slotu; pod siatką formularz (przypisanie, dzień, godziny, sala) z akcjami zapisz/anuluj/usuń i filtr widoku (wykładowca / grupa / całość).
+- **Dane:** `GET/POST/PATCH/DELETE /admin/lesson-slots` → encja `lesson_slot`; etykiety przypisań (przedmiot — wykładowca — grupa z kierunkiem) rozwijane na froncie z `GET /admin/structure`.
+- **Najtrudniejsze:** walidacja kolizji — jedna sala, jedna grupa i jeden wykładowca nie mogą mieć dwóch zajęć w tym samym czasie; backend odrzuca konflikt (409) z komunikatem, który formularz pokazuje dosłownie.
+- **Gotowe, gdy:** administrator doda i zedytuje slot, próba nałożenia zajęć w tej samej sali/grupie/wykładowcy w jednym czasie kończy się jasnym błędem, a slot pojawia się w planach studentów i wykładowców.
+- **Planowane:** tematy zajęć (`lesson_topic`) — model i tabela istnieją, ale bez endpointów i UI; potrzebne opiniom S5.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 ### A4 · Statystyki systemowe
 
-- **Co robi użytkownik:** Administrator podgląda kluczowe metryki systemu
-  (liczba użytkowników per rola, ocen, wiadomości, opinii, materiałów),
-  żeby ocenić użycie platformy.
-- **Widok:** `/admin/statistics` — pulpit z kartami liczników
-  i prostymi wykresami.
-- **Dane:** `GET /admin/stats` — agregacje licznikowe z tabel `user`,
-  `grade`, `message`, `feedback`, `material`.
-- **Najtrudniejsze:** wydajne agregacje i sensowna wizualizacja bez nadmiarowego narzędzia.
-- **Gotowe, gdy:** pulpit pokazuje poprawne liczniki zgodne ze stanem
-  bazy i odświeża się na żądanie.
+- **Co robi użytkownik:** Administrator podgląda metryki użycia platformy: konta per rola z podziałem na aktywne i wyłączone, liczniki ocen, wiadomości, opinii, materiałów i zajęć, a także rozmiar struktury uczelni (kierunki, grupy, przedmioty, przypisania, członkostwa).
+- **Widok:** `/admin/statistics` — karty liczników w dwóch sekcjach (Aktywność platformy, Struktura uczelni), słupkowy wykres kont per rola (ciemniejsza część słupka = konta aktywne, jaśniejsza = wyłączone) i przycisk „Odśwież”.
+- **Dane:** `GET /admin/stats` — wszystkie agregacje w jednym obiegu: konta grupowane per rola (wszystkie trzy role zawsze obecne w odpowiedzi), pozostałe liczniki prostymi zliczeniami wierszy.
+- **Najtrudniejsze:** zgodność liczników ze stanem bazy i odświeżanie na żądanie (TanStack invalidation) bez przeładowania strony.
+- **Gotowe, gdy:** pulpit pokazuje liczniki zgodne ze stanem bazy, wykres rozdziela konta aktywne od wyłączonych, a „Odśwież” ponownie odpytuje endpoint.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 **Wspólne (wszyscy)**
@@ -480,21 +467,11 @@ w interfejsie pozostają polskie.
 
 ### C2 · Powiadomienia in-app
 
-- **Co robi użytkownik:** Użytkownik widzi powiadomienia (ikona dzwonka
-  z licznikiem) o nowych ocenach, wiadomościach i zmianach planu; może
-  oznaczyć je jako przeczytane.
-- **Widok:** dzwonek w `Header`/`Navbar` + rozwijana lista powiadomień;
-  kliknięcie prowadzi do właściwej strony.
-- **Dane:** `GET /notifications`, `PATCH /notifications/{id}/read` →
-  encja `notification` (typ, treść, link docelowy, przeczytane);
-  tworzona przez backend przy ocenie, wiadomości, zmianie planu.
-- **Najtrudniejsze:** odczuwalna „natychmiastowość" bez web-socketów —
-  odpytywanie/aktualizacja licznika i niegubienie 
-  powiadomień przy wielu otwartych kartach.
-- **Gotowe, gdy:** wystawienie oceny, nowa wiadomość i zmiana planu
-  generują powiadomienie widoczne bez przeładowania strony, licznik
-  nieprzeczytanych jest zgodny na wszystkich widokach, a oznaczenie
-  przeczytanym trwale je ukrywa z licznika.
+- **Co robi użytkownik:** Użytkownik widzi powiadomienia (dzwonek z licznikiem nieprzeczytanych) o nowych ocenach, wiadomościach i zmianach planu; otwarcie oznacza je jako przeczytane.
+- **Widok:** dzwonek w `Header` + rozwijana lista powiadomień; kliknięcie prowadzi do strony wskazanej w powiadomieniu.
+- **Dane:** encja `notification` — model i tabela już istnieją (typ `grade`/`message`/`feedback`/`plan_change`, payload JSONB, `read_at`); do zbudowania są endpointy `GET /notifications`, `PATCH /notifications/{id}/read` oraz tworzenie wpisów przez backend przy ocenie, wiadomości i zmianie planu.
+- **Najtrudniejsze:** odczuwalna natychmiastowość bez web-socketów — odpytywanie licznika i niegubienie powiadomień przy wielu otwartych kartach.
+- **Gotowe, gdy:** wystawienie oceny, nowa wiadomość i zmiana planu generują powiadomienie widoczne bez przeładowania strony, licznik nieprzeczytanych zgadza się na wszystkich widokach, a oznaczenie przeczytanym trwale ukrywa wpis z licznika.
 - **Właściciel:** Kajetan Respondek (@Venomkajo)
 
 ### C3 · Pulpit startowy
